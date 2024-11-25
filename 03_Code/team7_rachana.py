@@ -12,12 +12,20 @@ from sklearn.metrics import confusion_matrix, classification_report, accuracy_sc
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-
+import os
 
 
 #%%
-health_data = pd.read_csv("Mental_Health_Dataset.csv")
+# Get the current directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
+# health_data = pd.read_csv("Mental_Health_Dataset.csv")
+
+# Construct the full path to the CSV file
+csv_file_path = os.path.join(current_dir, "Mental Health Dataset.csv")
+
+# Read the CSV file
+health_data = pd.read_csv(csv_file_path)
 
 print("\nReady to continue.")
 # %%
