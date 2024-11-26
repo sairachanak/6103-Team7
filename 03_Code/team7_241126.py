@@ -37,10 +37,9 @@ print(health_data.isnull().sum())
 print(health_data.dropna(inplace=True))
 health_data.info()
 # %%
+print(health_data.head)
+# %%
 # Clean Timestamp - Convert time and date to year
-
-
-import pandas as pd
 
 def process_timestamp_to_year(df, column_name):
     """
@@ -484,6 +483,59 @@ plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 plt.show()
 #%%[markdown]
 # The people who have social weakness have growing stress compared to others
+
+# %%[markdown]
+# Additional Visualization(EDA) added by haeyeon-start
+
+#%%[markdown]
+# Treatment vs Gender
+ 
+plt.figure(figsize=(6, 4))  # create countplot
+sns.countplot(x='Gender', hue='treatment', data=health_data, palette="viridis")
+plt.title("Treatment vs Gender")
+plt.show()
+
+#%%[markdown]
+# Treatment vs Family History
+
+plt.figure(figsize=(6, 4))   # create countplot
+sns.countplot(x='family_history', hue='treatment', data=health_data, palette="viridis")
+plt.title("Treatment vs Family History")
+plt.show()
+
+#%%[markdown]
+# Treatment vs Self-Employed
+
+plt.figure(figsize=(6, 4))   # create countplot
+sns.countplot(x='self_employed', hue='treatment', data=health_data, palette="viridis")
+plt.title("Treatment vs Self-Employed")
+plt.show()
+
+#%%[markdown]
+# Treatment vs Mental Health History
+
+# create countplot
+plt.figure(figsize=(6, 4))
+sns.countplot(x='Mental_Health_History', hue='treatment', data=health_data, palette="viridis")
+plt.title("Treatment vs Mental Health History")
+plt.show()
+
+#%%[markdown]
+# Treatment vs Days Indoors
+
+health_data['treatment_cat'] = health_data['treatment'].astype('category') # Change 'treatment' as categorical
+
+# Create a cross-tabulation to see proportions
+crosstab = pd.crosstab(health_data['Days_Indoors'], health_data['treatment_cat'])
+
+# Plot stacked bar chart
+crosstab.div(crosstab.sum(axis=1), axis=0).plot(kind='bar', stacked=True, figsize=(10, 6), color=sns.color_palette("Set2"))
+plt.title("Proportions of Treatment for Each Days Indoors Category")
+plt.xlabel("Days Indoors")
+plt.ylabel("Proportion")
+plt.legend(title="Treatment", loc='upper left')
+plt.show()
+
 #%%[markdown]
 # Statistical tests
 from scipy.stats import chi2_contingency, chi2
