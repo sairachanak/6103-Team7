@@ -12,6 +12,12 @@ from sklearn.metrics import confusion_matrix, classification_report, accuracy_sc
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.svm import SVC   
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.impute import SimpleImputer
+
 import os
 
 
@@ -854,4 +860,63 @@ print(f"Accuracy: {accuracy}")
 print(f"Confusion Matrix:\n{conf_matrix}")
 print(f"Classification Report:\n{class_report}")
 
+# %%[markdown]
+# Model 2 - haeyeon
+
+# SMART Question 
+# What factors most significantly contribute to individuals seeking mental health treatment?
+
+# %% # Clean and preprocess the data
+# Convert categorical variables to numeric using Label Encoding or One-Hot Encoding
+label_cols = ['Gender', 'Country', 'Occupation', 'self_employed', 'family_history', 
+              'treatment', 'Days_Indoors', 'Growing_Stress', 'Changes_Habits', 
+              'Mental_Health_History', 'Mood_Swings', 'Coping_Struggles', 
+              'Work_Interest', 'Social_Weakness', 'mental_health_interview', 
+              'care_options', 'treatment_cat']
+
+# Initialize LabelEncoder
+le = LabelEncoder()
+
+for col in label_cols:
+    health_data[col] = le.fit_transform(health_data[col])
+
+# Drop the Timestamp column as it is irrelevant to the model
+X = health_data.drop(columns=['treatment','treatment_cat', 'Timestamp'])
+y = health_data['treatment']
+
+# Handle missing data by imputing missing values
+imputer = SimpleImputer(strategy='most_frequent')
+X = imputer.fit_transform(X)
+
+# Split the data into 80% training and 20% testing
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Standardize the features (important for models like SVM and KNN)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+# %%[markdown]
+# Train and evaluate the KNN model
+knn_model = KNeighborsClassifier(n_neighbors=5)
+knn_model.fit(X_train, y_train)
+knn_pred = knn_model.predict(X_test)
+print("KNN Accuracy:", accuracy_score(y_test, knn_pred))
+print("KNN Classification Report:\n", classification_report(y_test, knn_pred))
+
+# %%[markdown]
+# KNN Accuracy: 66.08% , The model correctly predicted the target class about 66% of the time
 # %%
+# Train and evaluate the Logistic Regression model
+log_reg_model = LogisticRegression(max_iter=1000, random_state=42)
+log_reg_model.fit(X_train, y_train)
+log_reg_pred = log_reg_model.predict(X_test)
+print("Logistic Regression Accuracy:", accuracy_score(y_test, log_reg_pred))
+print("Logistic Regression Classification Report:\n", classification_report(y_test, log_reg_pred))
+
+# %%[markdown]
+# Logistic Regression Accuracy: 70.19%, The model correctly predicted the target class around 70% of the time, which is an improvement over the KNN model (66%).
+
+# %%[markdown]
+# Try Model Improvement
