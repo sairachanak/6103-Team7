@@ -916,7 +916,76 @@ print("Logistic Regression Accuracy:", accuracy_score(y_test, log_reg_pred))
 print("Logistic Regression Classification Report:\n", classification_report(y_test, log_reg_pred))
 
 # %%[markdown]
-# Logistic Regression Accuracy: 70.19%, The model correctly predicted the target class around 70% of the time, which is an improvement over the KNN model (66%).
+# Logistic Regression Accuracy: 70.19%, The model correctly predicted the target class around 70% of the time, which is an improvement over the KNN model (66.08%).
 
 # %%[markdown]
-# Try Model Improvement
+# Try Model Improvement - KNN
+# This part of the code takes about 9 minutes to execute, so it has been commented out.
+# After running code below, the best KNN Parameters: {'n_neighbors': 11, 'metric': 'euclidean'} 
+
+from sklearn.model_selection import RandomizedSearchCV
+
+# Define the parameter grid for KNN
+# param_dist_knn = {'n_neighbors': [3, 5, 7, 9, 11], 'metric': ['euclidean', 'manhattan']}
+
+# Create RandomizedSearchCV objects
+# random_search_knn = RandomizedSearchCV(KNeighborsClassifier(), param_distributions=param_dist_knn, n_iter=10, cv=5, random_state=42)
+
+# Fit RandomizedSearchCV
+# random_search_knn.fit(X_train, y_train)
+
+# Print best parameters
+# print("Best KNN Parameters:", random_search_knn.best_params_)
+
+#%%[markdown]
+# Best KNN Parameters: {'n_neighbors': 11, 'metric': 'euclidean'}
+
+# Try KNN Model with n_neighbors=11
+
+# Use the best parameters found from GridSearchCV
+knn_best11 = KNeighborsClassifier(n_neighbors=11, metric='euclidean')
+
+# Train the KNN model on the training data
+knn_best11.fit(X_train, y_train)
+
+# Make predictions on the test data
+knn_pred11 = knn_best11.predict(X_test)
+
+# Evaluate the performance
+print("KNN Accuracy:", accuracy_score(y_test, knn_pred11))
+print("KNN Classification Report:\n", classification_report(y_test, knn_pred11))
+
+
+#%%[markdown]
+# The updated KNN model has accuracy of 68.36% which is little better than previous model using n_neighbors=5(66.08%)
+# %%
+# Try Model Improvement - Logistic Regression
+
+# Define the parameter grid for Logistic Regression
+param_dist_logreg = {'C': [0.1, 1, 10, 100], 'solver': ['liblinear', 'lbfgs']}
+
+# Create RandomizedSearchCV objects
+random_search_logreg = RandomizedSearchCV(LogisticRegression(), param_distributions=param_dist_logreg, n_iter=10, cv=5, random_state=42)
+
+# Fit RandomizedSearchCV
+random_search_logreg.fit(X_train, y_train)
+
+# Print best parameters
+print("Best Logistic Regression Parameters:", random_search_logreg.best_params_)
+
+#%%[markdown]
+# The best Logistic Regression Parameters: {'solver': 'liblinear', 'C': 1}
+
+# Try Logistic Regression model with best parameters
+
+log_reg_best2 = LogisticRegression(solver='liblinear', C=1, random_state=42)
+log_reg_best2.fit(X_train, y_train)
+log_reg_pred_best = log_reg_best2.predict(X_test)
+
+# Evaluate the model
+print("Logistic Regression Accuracy with Best Parameters:", accuracy_score(y_test, log_reg_pred_best))
+print("Logistic Regression Classification Report with Best Parameters:\n", classification_report(y_test, log_reg_pred_best))
+# %%[markdown]
+# after fine-tuning the parameters for Logistic Regression, the performance might not have significantly improved
+
+# %%
