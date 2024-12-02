@@ -808,6 +808,18 @@ print(f"Accuracy: {accuracy}")
 print(f"Confusion Matrix:\n{conf_matrix}")
 print(f"Classification Report:\n{class_report}")
 
+#%%
+from sklearn.model_selection import KFold, cross_val_score
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
+# Perform K-Fold Cross-Validation
+cv_scores = cross_val_score(clf, data, f_data, cv=kf, scoring='accuracy')
+
+# Output the results
+print(f"Cross-Validation Scores: {cv_scores}")
+print(f"Mean Accuracy: {cv_scores.mean()}")
+print(f"Standard Deviation: {cv_scores.std()}")
+
 # %%
 # Importing necessary libraries
 from sklearn.experimental import enable_hist_gradient_boosting
