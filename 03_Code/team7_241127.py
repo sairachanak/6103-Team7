@@ -1000,4 +1000,40 @@ print("Logistic Regression Classification Report with Best Parameters:\n", class
 # %%[markdown]
 # after fine-tuning the parameters for Logistic Regression, the performance might not have significantly improved
 
+# %% EDA work students (Yonathan)
+
+#Observe the different value counts for occupation in the health dataset
+
+occupation_observations = health_data['Occupation'].value_counts()
+print(occupation_observations)
+
+unique_occupations = health_data[['Occupation']].drop_duplicates()
+print(unique_occupations)
+
+'''
+Reminder the occupation column was encoded in code previously. 
+
+2: "Housewife",
+4: "Student",
+1: "Corporate",
+3: "Others",
+0: "Business"
+
+'''
+
+occupation_mapping = {
+    2: "Housewife",
+    4: "Student",
+    1: "Corporate",
+    3: "Others",
+    0: "Business"
+}
+
+health_data['Decoded_Occupation'] = health_data['Occupation'].map(occupation_mapping)
+
+print(health_data[['Occupation', 'Decoded_Occupation']].head())
+
+health_data['Decoded_Occupation'].value_counts()
+
+#We can see our dataset has 60687 students
 # %%
