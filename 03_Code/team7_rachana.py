@@ -1393,3 +1393,6 @@ randomForest()
 # As seen from the summary Gender plays a very important role and contributes the most to the Growing stress followed by
 # Mental health interview and family history positive coefficent meaning the ones who have given the interview 
 # and have a familty hisroty of mental health could have more growing stress
+
+
+#%%SVM prep (Yonathan)
