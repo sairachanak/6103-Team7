@@ -1407,3 +1407,32 @@ randomForest()
 
 
 #%%SVM prep (Yonathan)
+
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report, accuracy_score
+
+def train_svm():
+    # Instantiate the SVM model with kernel of choice (e.g., 'linear', 'rbf')
+    svm_model = SVC(kernel='linear', probability=True)
+
+    # Fit the model on the training data
+    svm_model.fit(Xtrain, Ytrain)
+
+    # Predict the labels on the test set
+    y_pred_class = svm_model.predict(Xtest)
+
+    # Evaluate the model
+    print("SVM Model Evaluation")
+    print("Accuracy:", accuracy_score(Ytest, y_pred_class))
+    print("Classification Report:\n", classification_report(Ytest, y_pred_class))
+    
+    # If needed, visualize the confusion matrix
+    sns.heatmap(metrics.confusion_matrix(Ytest, y_pred_class), annot=True, fmt="d")
+    plt.title("Confusion Matrix for SVM")
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.show()
+
+    return svm_model
+
+svm_model = train_svm()
