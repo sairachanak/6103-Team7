@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns 
 import altair as alt
 from scipy.stats import randint
+import os
+
 # prep
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
@@ -13,6 +15,8 @@ from sklearn.preprocessing import binarize, LabelEncoder, MinMaxScaler
 from sklearn.preprocessing import OneHotEncoder
 
 #Featureimportance
+# need to install if you don't have 
+# pip3 install yellowbrick
 from yellowbrick.model_selection import FeatureImportances
 
 
@@ -26,9 +30,16 @@ from sklearn.metrics import confusion_matrix, classification_report, accuracy_sc
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import RandomizedSearchCV
-#%%
-health_data = pd.read_csv("Mental Health Dataset.csv")
 
+#%%
+# Get the current directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the full path to the CSV file
+csv_file_path = os.path.join(current_dir, "Mental Health Dataset.csv")
+
+# Read the CSV file
+health_data = pd.read_csv(csv_file_path)
 
 print("\nReady to continue.")
 # %%
@@ -1395,34 +1406,4 @@ randomForest()
 # and have a familty hisroty of mental health could have more growing stress
 
 
-# %%[markdown]
-# SVM prep (Yonathan)
-from sklearn.svm import SVC
-from sklearn.metrics import classification_report, accuracy_score
-
-def train_svm():
-    svm_model = SVC(kernel='linear', probability=True)
-
-    # Fit the model on the training data
-    svm_model.fit(Xtrain, Ytrain)
-
-    # Predict the labels on the test set
-    y_pred_class = svm_model.predict(Xtest)
-
-    return svm_model
-
-svm_model = train_svm()
-
-#%% Model eval
-
-print("SVM Model Evaluation")
-print("Accuracy:", accuracy_score(Ytest, y_pred_class))
-print("Classification Report:\n", classification_report(Ytest, y_pred_class))
-
-# If needed, visualize the confusion matrix
-sns.heatmap(metrics.confusion_matrix(Ytest, y_pred_class), annot=True, fmt="d")
-plt.title("Confusion Matrix for SVM")
-plt.xlabel("Predicted")
-plt.ylabel("Actual")
-plt.show()
-
+#%%SVM prep (Yonathan)
