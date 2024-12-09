@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 import seaborn as sns 
 import altair as alt
 from scipy.stats import randint
@@ -52,9 +53,6 @@ print(health_data.dropna(inplace=True))
 health_data.info()
 # %%
 # Clean Timestamp - Convert time and date to year
-
-
-import pandas as pd
 
 def process_timestamp_to_year(df, column_name):
     """
@@ -601,21 +599,22 @@ color_palette = [
     '#F4A261'   # Peach Orange
 ]
 
-# Create subplots for pie charts
-fig, axs = plt.subplots(3, 4, figsize=(20, 15))
-axs = axs.flatten()
+# Create a 4x4 grid using GridSpec
+fig = plt.figure(figsize=(20, 20))
+gs = gridspec.GridSpec(4, 4, figure=fig)
 
 # Generate pie charts
 for i, (col, count) in enumerate(zip(cols_to_visualize, counts)):
-    axs[i].pie(
+    ax = fig.add_subplot(gs[i])  # Create a subplot in the ith grid cell
+    ax.pie(
         count,
         labels=count.index,
         autopct='%1.1f%%',
         startangle=90,
         colors=color_palette[:len(count)]  # Use palette based on the number of unique values
     )
-    axs[i].set_title(col, fontsize=14, fontweight='bold', color='darkslategray')
-    axs[i].grid(False)
+    ax.set_title(col, fontsize=14, fontweight='bold', color='darkslategray')
+    ax.grid(False)
 
 # Adjust layout
 plt.tight_layout()
@@ -629,7 +628,7 @@ plt.show()
 bright_palette = ["#FFB74D", "#64B5F6", "#81C784", "#E57373", "#FFD54F", "#4DD0E1"]
 
 # Set the Seaborn style to 'whitegrid' for a clean look
-sns.set(style="whitegrid")
+sns.set_style("whitegrid")
 
 # Create the countplot
 plt.figure(figsize=(20, 10))
@@ -978,6 +977,95 @@ plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 plt.show()
 #%%[markdown]
 # The people who have social weakness have growing stress compared to others
+
+#%%[markdown]
+# EDA specifically for the Student occupation
+# Filter data for 'Student' occupation
+student_data = health_data[health_data['Occupation'] == 'Student']
+
+# Check the first few rows of the filtered data
+student_data.head()
+
+#%%[markdown]
+# Distribution of Days_Indoors for Students
+# Plot distribution of 'Days_Indoors' for students
+sns.histplot(student_data['Days_Indoors'], kde=True, color='skyblue')
+plt.title('Distribution of Days Indoors for Students')
+plt.xlabel('Days Indoors')
+plt.ylabel('Frequency')
+plt.show()
+
+#%%[markdown]
+# Treatment vs Growing Stress for students
+sns.countplot(x='Growing_Stress', hue='treatment', data=student_data, palette='Set2')
+plt.title('Treatment vs Growing Stress for Students')
+plt.xlabel('Growing Stress')
+plt.ylabel('Count')
+plt.show()
+
+#%%[markdown]
+# Changes in Habits vs Growing Stress for students
+sns.countplot(x='Growing_Stress', hue='Changes_Habits', data=student_data, palette='Set2')
+plt.title('Changes in Habits vs Growing Stress for Students')
+plt.xlabel('Growing Stress')
+plt.ylabel('Count')
+
+# Move the legend (hue label) to the top-left
+plt.legend(title='Changes in Habits', loc='upper left', bbox_to_anchor=(0, 1))
+plt.show()
+
+
+#%%[markdown]
+# Coping Struggles vs Growing Stress for students
+sns.countplot(x='Growing_Stress', hue='Coping_Struggles', data=student_data, palette='Set2')
+plt.title('Coping Struggles vs Growing Stress for Students')
+plt.xlabel('Growing Stress')
+plt.ylabel('Count')
+plt.show()
+
+#%%[markdown]
+# Social Weakness vs Growing Stress for students
+sns.countplot(x='Growing_Stress', hue='Social_Weakness', data=student_data, palette='Set2')
+plt.title('Social Weakness vs Growing Stress for Students')
+plt.xlabel('Growing Stress')
+plt.ylabel('Count')
+plt.show()
+
+#%%[markdown]
+# Mood Swings vs Growing Stress for students
+sns.countplot(x='Growing_Stress', hue='Mood_Swings', data=student_data, palette='Set2')
+plt.title('Mood Swings vs Growing Stress for Students')
+plt.xlabel('Growing Stress')
+plt.ylabel('Count')
+plt.show()
+
+#%%[markdown]
+# Gender vs Growing Stress for students
+sns.countplot(x='Growing_Stress', hue='Gender', data=student_data, palette='Set2')
+plt.title('Gender vs Growing Stress for Students')
+plt.xlabel('Growing Stress')
+plt.ylabel('Count')
+plt.show()
+
+#%%[markdown]
+# Days Indoors vs Growing Stress for students
+sns.boxplot(x='Growing_Stress', y='Days_Indoors', data=student_data, palette='Set2')
+plt.title('Days Indoors vs Growing Stress for Students')
+plt.xlabel('Growing Stress')
+plt.ylabel('Days Indoors')
+plt.show()
+
+#%%[markdown]
+# Correlation heatmap for variables correlated with Growing Stress for students
+student_corr = student_data[['Days_Indoors', 'Growing_Stress', 'Changes_Habits', 'Coping_Struggles', 
+                             'Mood_Swings', 'Social_Weakness', 'treatment']].corr()
+plt.figure(figsize=(8, 6))
+sns.heatmap(student_corr, annot=True, cmap='coolwarm', fmt='.2f', linewidths=0.5)
+plt.title('Correlation Heatmap for Growing Stress and Related Variables for Students')
+plt.show()
+
+
+
 #%%[markdown]
 # Statistical tests
 from scipy.stats import chi2_contingency, chi2
@@ -1015,7 +1103,6 @@ for col in cols:
 
 #%%[markdown]
 # Before the unknown factor to create the normal model without the unknown factor
-
 
 
 
