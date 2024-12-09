@@ -37,7 +37,7 @@ from sklearn.model_selection import RandomizedSearchCV
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Construct the full path to the CSV file
-csv_file_path = os.path.join(current_dir, "Mental_Health_Dataset.csv")
+csv_file_path = os.path.join(current_dir, "Mental Health Dataset.csv")
 
 # Read the CSV file
 health_data = pd.read_csv(csv_file_path)
@@ -1523,4 +1523,3 @@ def train_svm():
     return svm_model
 
 svm_model = train_svm()
-# %%
