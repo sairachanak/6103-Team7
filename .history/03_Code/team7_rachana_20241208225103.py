@@ -1386,6 +1386,26 @@ randomForest()
 # %%[makrdown]
 # Feature importance and selection
 
+from pandas.plotting import parallel_coordinates
+
+# Select a subset of relevant columns for visualization
+parallel_data = health_data[['Growing_Stress', 'Mood_Swings', 'Coping_Struggles',
+                             'Mental_Health_History', 'Days_Indoors']]
+
+# Drop rows with NaN values for cleaner plotting
+parallel_data = parallel_data.dropna()
+
+# Map Growing_Stress back to labels for better interpretation
+parallel_data['Growing_Stress_Label'] = parallel_data['Growing_Stress'].map({0: 'No Stress', 1: 'Stress', 2: 'Maybe Stress'})
+
+# Plot the parallel coordinates chart
+plt.figure(figsize=(12, 6))
+parallel_coordinates(parallel_data, class_column='Growing_Stress_Label', colormap='viridis', alpha=0.7)
+plt.title('Parallel Coordinates Plot for Growing Stress Levels')
+plt.ylabel('Values (Normalized)')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
 
 
 
@@ -1393,8 +1413,6 @@ randomForest()
 # As seen from the summary Gender plays a very important role and contributes the most to the Growing stress followed by
 # Mental health interview and family history positive coefficent meaning the ones who have given the interview 
 # and have a familty hisroty of mental health could have more growing stress
-# Retry with optimized parameter tuning
-# %%(Abirham)
 
 
 #%%SVM prep (Yonathan)

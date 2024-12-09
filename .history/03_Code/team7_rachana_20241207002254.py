@@ -27,7 +27,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import RandomizedSearchCV
 #%%
-health_data = pd.read_csv("Mental Health Dataset.csv")
+health_data = pd.read_csv("Mental_Health_Dataset.csv")
 
 
 print("\nReady to continue.")
@@ -1393,8 +1393,6 @@ randomForest()
 # As seen from the summary Gender plays a very important role and contributes the most to the Growing stress followed by
 # Mental health interview and family history positive coefficent meaning the ones who have given the interview 
 # and have a familty hisroty of mental health could have more growing stress
-# Retry with optimized parameter tuning
-# %%(Abirham)
 
 
 #%%SVM prep (Yonathan)

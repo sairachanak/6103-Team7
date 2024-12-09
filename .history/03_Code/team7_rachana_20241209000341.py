@@ -1394,7 +1394,29 @@ randomForest()
 # Mental health interview and family history positive coefficent meaning the ones who have given the interview 
 # and have a familty hisroty of mental health could have more growing stress
 # Retry with optimized parameter tuning
-# %%(Abirham)
+grid_search = GridSearchCV(
+    estimator=decision_tree,
+    param_grid=param_grid,
+    scoring='accuracy',
+    cv=3,  # Reduced folds for faster execution
+    verbose=1,
+    n_jobs=-1
+)
+
+# Fit the model on the training data
+grid_search.fit(X_train, y_train)
+
+# Retrieve the best parameters and the best score
+best_params = grid_search.best_params_
+best_score = grid_search.best_score_
+
+# Evaluate the optimized model on the test set
+best_model = grid_search.best_estimator_
+y_pred_optimized = best_model.predict(X_test)
+optimized_accuracy = accuracy_score(y_test, y_pred_optimized)
+optimized_report = classification_report(y_test, y_pred_optimized)
+
+best_params, best_score, optimized_accuracy, optimized_report
 
 
 #%%SVM prep (Yonathan)

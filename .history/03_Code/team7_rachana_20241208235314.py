@@ -1158,7 +1158,7 @@ print('Logit model accuracy (with the test set):', logit.score(Xtest, Ytest))
 print('Logit model accuracy (with the train set):', logit.score(Xtrain, Ytrain))
 
 
-#%%[markdown]
+#%%
 # Evaluation of the model
 def evalClassModel(model, y_test, y_pred_class, plot=False):
     #Classification accuracy: percentage of correct predictions
@@ -1393,8 +1393,6 @@ randomForest()
 # As seen from the summary Gender plays a very important role and contributes the most to the Growing stress followed by
 # Mental health interview and family history positive coefficent meaning the ones who have given the interview 
 # and have a familty hisroty of mental health could have more growing stress
-# Retry with optimized parameter tuning
-# %%(Abirham)
 
 
 #%%SVM prep (Yonathan)

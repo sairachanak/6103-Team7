@@ -1394,7 +1394,70 @@ randomForest()
 # Mental health interview and family history positive coefficent meaning the ones who have given the interview 
 # and have a familty hisroty of mental health could have more growing stress
 # Retry with optimized parameter tuning
-# %%(Abirham)
+
+# Re-import necessary libraries
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, accuracy_score
+
+# Reload the dataset
+file_path = '/mnt/data/Mental Health Dataset.csv'
+health_data = pd.read_csv(file_path)
+
+# Perform preprocessing (map categories to numerical values)
+mappings = {
+    'Gender': {'Female': 1, 'Male': 0},
+    'self_employed': {'Yes': 1, 'No': 0},
+    'family_history': {'Yes': 1, 'No': 0},
+    'treatment': {'Yes': 1, 'No': 0},
+    'Days_Indoors': {
+        'Go out Every day': 365,
+        'More than 2 months': 60,
+        '31-60 days': 45,
+        '15-30 days': 22.5,
+        '1-14 days': 7.5,
+    },
+    'Growing_Stress': {'Yes': 1, 'No': 0, 'Maybe': 2},
+    'Changes_Habits': {'Yes': 1, 'No': 0, 'Maybe': 2},
+    'Mental_Health_History': {'Yes': 1, 'No': 0, 'Maybe': 2},
+    'Mood_Swings': {'Low': 0, 'Medium': 1, 'High': 2},
+    'Coping_Struggles': {'Yes': 1, 'No': 0},
+    'Work_Interest': {'Yes': 1, 'No': 0, 'Maybe': 2},
+    'Social_Weakness': {'Yes': 1, 'No': 0, 'Maybe': 2},
+    'mental_health_interview': {'Yes': 1, 'No': 0, 'Maybe': 2},
+    'care_options': {'Yes': 1, 'No': 0, 'Not sure': 2},
+}
+
+# Apply mappings to the dataset
+for column, mapping in mappings.items():
+    if column in health_data.columns:
+        health_data[column] = health_data[column].map(mapping)
+
+# Drop rows with missing values for simplicity
+health_data.dropna(inplace=True)
+
+# One-hot encode categorical features like 'Occupation'
+health_data = pd.get_dummies(health_data, columns=['Occupation'], drop_first=True)
+
+# Splitting features and target
+X = health_data.drop(columns=['Growing_Stress', 'Timestamp', 'Country'])
+y = health_data['Growing_Stress']
+
+# Splitting into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Building and evaluating the KNN model
+knn = KNeighborsClassifier(n_neighbors=5)  # Default: 5 neighbors
+knn.fit(X_train, y_train)
+y_pred_knn = knn.predict(X_test)
+
+# Evaluating the model
+knn_accuracy = accuracy_score(y_test, y_pred_knn)
+knn_report = classification_report(y_test, y_pred_knn)
+
+knn_accuracy, knn_report
 
 
 #%%SVM prep (Yonathan)
