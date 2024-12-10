@@ -18,7 +18,7 @@ from sklearn.preprocessing import OneHotEncoder
 #Featureimportance
 # need to install if you don't have 
 # pip3 install yellowbrick
-from yellowbrick.model_selection import FeatureImportances
+#from yellowbrick.model_selection import FeatureImportances
 
 
 # Validation libraries
@@ -1574,32 +1574,56 @@ randomForest()
 
 #%%SVM prep (Yonathan)
 
+
+
+#Let's build a scatterplot to visualize the data and understand certain features of SVM to use
+#Need to get advice from group
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+
+#%%
+
+'''Need to encode occupation since SVM takes numerical variables'''
+
+final_df_encoded = pd.get_dummies(final_df, columns=['Occupation'], drop_first=True)
+#First line returns us more variables (breaks variable down) with boolean values (True/False)
+#Need to convert into integer
+final_df_encoded[final_df_encoded.select_dtypes(include='bool').columns] = final_df_encoded.select_dtypes(include='bool').astype(int)
+
+#Check if it worked
+print(final_df_encoded.dtypes)
+#Yes it worked as of running the line (12/10). Now move forward to model building
+
+X_clean = X.dropna()
+y_clean = y[X_clean.index]
+
+
+#%%
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report, accuracy_score
+from sklearn.preprocessing import StandardScaler
 
-def train_svm():
-    # Instantiate the SVM model with kernel of choice (e.g., 'linear', 'rbf')
-    svm_model = SVC(kernel='linear', probability=True)
 
-    # Fit the model on the training data
-    svm_model.fit(Xtrain, Ytrain)
+'''There were some missing values for X so I will remove them in the previous cell'''
+X_clean = final_df_encoded.drop('Growing_Stress', axis=1).dropna()
+y_clean = final_df_encoded['Growing_Stress'][X_clean.index]
 
-    # Predict the labels on the test set
-    y_pred_class = svm_model.predict(Xtest)
+from sklearn.model_selection import train_test_split
+Xtrain, Xtest, Ytrain, Ytest = train_test_split(X_clean, y_clean, test_size=0.2, random_state=42)
 
-    # Evaluate the model
-    print("SVM Model Evaluation")
-    print("Accuracy:", accuracy_score(Ytest, y_pred_class))
-    print("Classification Report:\n", classification_report(Ytest, y_pred_class))
-    
-    # If needed, visualize the confusion matrix
-    sns.heatmap(metrics.confusion_matrix(Ytest, y_pred_class), annot=True, fmt="d")
-    plt.title("Confusion Matrix for SVM")
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.show()
+scaler = StandardScaler()
+Xtrain_scaled = scaler.fit_transform(Xtrain)
+Xtest_scaled = scaler.transform(Xtest)
 
-    return svm_model
+svm_model = SVC(kernel='linear', C=1.0, gamma='scale', probability=True)
+svm_model.fit(Xtrain_scaled, Ytrain)
 
-svm_model = train_svm()
-# %%
+# Predictions
+y_pred_class = svm_model.predict(Xtest_scaled)
+y_pred_prob = svm_model.predict_proba(Xtest_scaled)[:, 1]
+
+# %%[markdown]
+# Is SVM model ideal for the dataset? SVM is more ideal for smaller datasets
+# Should I take a percentage of the data and test again to see if computation time lowers?
