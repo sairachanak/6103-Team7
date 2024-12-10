@@ -1627,3 +1627,28 @@ y_pred_prob = svm_model.predict_proba(Xtest_scaled)[:, 1]
 # %%[markdown]
 # Is SVM model ideal for the dataset? SVM is more ideal for smaller datasets
 # Should I take a percentage of the data and test again to see if computation time lowers?
+
+
+
+'''New code to take random sample(10%) of the data'''
+X_clean_sampled = X_clean.sample(frac=0.1, random_state=42)
+y_clean_sampled = y_clean[X_clean_sampled.index]
+
+
+from sklearn.model_selection import train_test_split
+Xtrain, Xtest, Ytrain, Ytest = train_test_split(X_clean_sampled, y_clean_sampled, test_size=0.2, random_state=42)
+
+# Scale the data (SVM is sensitive to feature scaling)
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+Xtrain_scaled = scaler.fit_transform(Xtrain)
+Xtest_scaled = scaler.transform(Xtest)
+
+from sklearn.svm import SVC
+svm_model = SVC(kernel='linear', C=1.0, probability=True)
+svm_model.fit(Xtrain_scaled, Ytrain)
+
+
+# Predictions
+y_pred_class = svm_model.predict(Xtest_scaled)
+y_pred_prob = svm_model.predict_proba(Xtest_scaled)[:, 1]
