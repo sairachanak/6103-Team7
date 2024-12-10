@@ -1207,9 +1207,12 @@ print(cm)
 
 #%%[markdown]
 # We have a the "unknown factor" quantifies the portion of the variance in Growing_Stress that is unexplained by the selected features.
-# (i) Calculate the weighted probability of all features, ensuring the total feature weights sum to 1.
+# (i) Calculate the weighted probability of all features, ensuring the total feature weights sum to 1 and the 
+# conditional probability if found for each feature.
 # (ii) If the total weights are less than 1, it indicates growing stress due to personal reasons. 
 # (iii) This suggests that an unknown factor is impacting the growing stress. And create a new feature unknown factor.
+# (iv) This will help us have a more certainity in Growing factor by utilising the unknown factor to bring the 
+# Growing stress from 3 classes to 2 classes
 # 
 #%%[markdown]
 #caluclate the conditional probability
