@@ -18,7 +18,7 @@ from sklearn.preprocessing import OneHotEncoder
 #Featureimportance
 # need to install if you don't have 
 # pip3 install yellowbrick
-#from yellowbrick.model_selection import FeatureImportances
+from yellowbrick.model_selection import FeatureImportances
 
 
 # Validation libraries
@@ -668,31 +668,31 @@ df.set_title('Growing stress by Gender ')
 #%%[markdown]
 
 # Group the data by 'Growing_Stress' and 'Days_Indoors' and count the occurrences
-Icount = health_data.groupby(['Growing_Stress', 'Days_Indoors']).size().reset_index(name='Count')
+#Icount = health_data.groupby(['Growing_Stress', 'Days_Indoors']).size().reset_index(name='Count')
 
 # Create the bar plot using Altair
-import altair as alt
+#import altair as alt
 
-chart = alt.Chart(Icount).mark_bar().encode(
-    x='Count:Q',
-    y='Days_Indoors:N',
-    color='Growing_Stress:N',
-    tooltip=['Growing_Stress', 'Count']
-).properties(
-    title='Distribution of Growing Stress by Days Indoors',
-    width=600,
-    height=400
-).configure_mark(
-    opacity=0.7  # Subtle opacity for the bars
-).configure_title(
-    fontSize=18, 
-    font='Arial', 
-    anchor='middle', 
-    color='gray'
-)
+#chart = alt.Chart(Icount).mark_bar().encode(
+#    x='Count:Q',
+#    y='Days_Indoors:N',
+#    color='Growing_Stress:N',
+#    tooltip=['Growing_Stress', 'Count']
+#).properties(
+#    title='Distribution of Growing Stress by Days Indoors',
+#    width=600,
+#    height=400
+#).configure_mark(
+#    opacity=0.7  # Subtle opacity for the bars
+#).configure_title(
+#    fontSize=18, 
+#    font='Arial', 
+#    anchor='middle', 
+#    color='gray'
+#)
 
 # Show the chart
-chart.show()
+#chart.show()
 # %%[markdown]
 # Growing stress by Days spent in indoors
 
