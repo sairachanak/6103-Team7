@@ -12,7 +12,7 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from sklearn.datasets import make_classification
-from sklearn.preprocessing import binarize, LabelEncoder, MinMaxScaler
+from sklearn.preprocessing import binarize, LabelEncoder, MinMaxScaler, StandardScaler, label_binarize
 from sklearn.preprocessing import OneHotEncoder
 
 #Featureimportance
@@ -25,7 +25,7 @@ from yellowbrick.model_selection import FeatureImportances
 from sklearn import metrics
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_recall_curve
 from sklearn.model_selection import cross_val_score
-from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, roc_auc_score, roc_curve
 
 #models
 from sklearn.linear_model import LogisticRegression
@@ -37,7 +37,7 @@ from sklearn.model_selection import RandomizedSearchCV
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Construct the full path to the CSV file
-csv_file_path = os.path.join(current_dir, "Mental_Health_Dataset.csv")
+csv_file_path = os.path.join(current_dir, "Mental Health Dataset.csv")
 
 # Read the CSV file
 health_data = pd.read_csv(csv_file_path)
@@ -1104,12 +1104,88 @@ for col in cols:
 #%%[markdown]
 # Before the unknown factor to create the normal model without the unknown factor
 
+#%%[markdown]
+# Random Forest -haeyeon
 
+# Create a copy of the health_data to avoid modifying the original
+health_data_copy = health_data.copy()
 
+# Filter data to only include students
+health_data_students = health_data_copy[health_data_copy['Occupation'] == 'Student']
 
+# Preprocessing the dataset
+# Drop 'Timestamp' and other irrelevant columns for prediction
+X = health_data_students.drop(['Growing_Stress', 'Timestamp', 'Country', 'Occupation'], axis=1)  # Drop target and irrelevant columns
+y = health_data_students['Growing_Stress']  # Target column
 
+# Convert categorical columns to numeric (if any)
+X = pd.get_dummies(X, drop_first=True)  # One-hot encoding for categorical features
 
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
+# Scale the features (Important for Random Forest and other models)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Train the Random Forest Classifier
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X_train_scaled, y_train)
+
+# Get predicted probabilities for each class
+y_pred_proba = rf.predict_proba(X_test_scaled)
+
+# One-vs-Rest approach: Binarize the target labels for multiclass classification
+y_test_bin = label_binarize(y_test, classes=[0, 1, 2])  # Binarize the target labels (0, 1, 2)
+
+# Compute AUC for each class (One-vs-Rest)
+roc_auc = roc_auc_score(y_test_bin, y_pred_proba, average='macro', multi_class='ovr')
+
+# Plot the ROC curve for each class
+plt.figure(figsize=(8, 6))
+for i in range(3):  # 3 classes: 0, 1, and 2
+    fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_pred_proba[:, i])
+    plt.plot(fpr, tpr, lw=2, label=f'Class {i} (AUC = {roc_auc_score(y_test_bin[:, i], y_pred_proba[:, i]):.2f})')
+
+# Plot diagonal line for random classifier
+plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+
+# Set plot labels and title
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Multiclass ROC Curve (One-vs-Rest) for Students')
+plt.legend(loc='lower right')
+plt.show()
+
+# Print the Macro AUC score
+print(f"Macro AUC-ROC score for Students: {roc_auc:.2f}")
+#%%[markdown]
+# A Macro AUC-ROC score of 1.00, might be because of Overfitting, Data Imbalance(Growing_Stress (with values 0, 1, 2)
+# We tried additioanl validation
+
+#%%[markdown]
+# Perform cross-validation (e.g., 5-fold)
+cv_scores = cross_val_score(rf, X, y, cv=5, scoring='roc_auc_ovr')
+print(f'Cross-validated AUC-ROC scores: {cv_scores}')
+print(f'Mean AUC-ROC score from cross-validation: {cv_scores.mean():.2f}')
+
+# Check Class Distribution
+print(y.value_counts())
+
+# Confusion Matrix
+# Generate confusion matrix
+cm = confusion_matrix(y_test, rf.predict(X_test_scaled))
+print(cm)
+
+#%%[markdown]
+# The AUC scores across folds range from 0.45 to 0.75, with a mean AUC of 0.62
+# Class 2: 22,915 samples, Class 1: 21,424 samples, Class 0: 16,348 samples <- little imblanced, but not extreme
+# Class 0 (Stress Level 0): The model has made no misclassifications, indicating that it is very confident when predicting the "no stress" class.
+# Class 1 (Stress Level 1): The model is performing fairly well, with a few misclassifications (12).
+# Class 2 (Stress Level 2): The model is performing quite well here too, with a very small number of misclassifications (17)
 
 
 
