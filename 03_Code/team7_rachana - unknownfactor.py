@@ -1706,6 +1706,17 @@ randomForest()
 
 #%%SVM prep (Yonathan)
 
+
+
+#Let's build a scatterplot to visualize the data and understand certain features of SVM to use
+#Need to get advice from group
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+
+#%%
+
 '''Need to encode occupation since SVM takes numerical variables'''
 
 final_df_encoded = pd.get_dummies(final_df, columns=['Occupation'], drop_first=True)
@@ -1731,24 +1742,25 @@ from sklearn.preprocessing import StandardScaler
 X_clean = final_df_encoded.drop('Growing_Stress', axis=1).dropna()
 y_clean = final_df_encoded['Growing_Stress'][X_clean.index]
 
-#%%
-#from sklearn.model_selection import train_test_split
-#Xtrain, Xtest, Ytrain, Ytest = train_test_split(X_clean, y_clean, test_size=0.2, random_state=42)
+from sklearn.model_selection import train_test_split
+Xtrain, Xtest, Ytrain, Ytest = train_test_split(X_clean, y_clean, test_size=0.2, random_state=42)
 
-#scaler = StandardScaler()
-#Xtrain_scaled = scaler.fit_transform(Xtrain)
-#Xtest_scaled = scaler.transform(Xtest)
+scaler = StandardScaler()
+Xtrain_scaled = scaler.fit_transform(Xtrain)
+Xtest_scaled = scaler.transform(Xtest)
 
-#svm_model = SVC(kernel='linear', C=1.0, gamma='scale', probability=True)
-#svm_model.fit(Xtrain_scaled, Ytrain)
+svm_model = SVC(kernel='linear', C=1.0, gamma='scale', probability=True)
+svm_model.fit(Xtrain_scaled, Ytrain)
 
 # Predictions
-#y_pred_class = svm_model.predict(Xtest_scaled)
-#y_pred_prob = svm_model.predict_proba(Xtest_scaled)[:, 1]
+y_pred_class = svm_model.predict(Xtest_scaled)
+y_pred_prob = svm_model.predict_proba(Xtest_scaled)[:, 1]
 
 # %%[markdown]
 # Is SVM model ideal for the dataset? SVM is more ideal for smaller datasets
 # Should I take a percentage of the data and test again to see if computation time lowers?
+
+
 
 '''New code to take random sample(10%) of the data'''
 X_clean_sampled = X_clean.sample(frac=0.1, random_state=42)
@@ -1758,6 +1770,7 @@ y_clean_sampled = y_clean[X_clean_sampled.index]
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, Ytrain, Ytest = train_test_split(X_clean_sampled, y_clean_sampled, test_size=0.2, random_state=42)
 
+# Scale the data (SVM is sensitive to feature scaling)
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
 Xtrain_scaled = scaler.fit_transform(Xtrain)
@@ -1771,54 +1784,3 @@ svm_model.fit(Xtrain_scaled, Ytrain)
 # Predictions
 y_pred_class = svm_model.predict(Xtest_scaled)
 y_pred_prob = svm_model.predict_proba(Xtest_scaled)[:, 1]
-
-#%%[markdown]
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix, roc_auc_score, roc_curve
-import seaborn as sns
-import matplotlib.pyplot as plt
-accuracy = accuracy_score(Ytest, y_pred_class)
-print(f"Accuracy: {accuracy:.2f}")
-
-
-print("\nConfusion Matrix:")
-conf_matrix = confusion_matrix(Ytest, y_pred_class)
-sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues")
-plt.title("Confusion Matrix")
-plt.xlabel("Predicted")
-plt.ylabel("Actual")
-plt.show()
-
-auc_score = roc_auc_score(Ytest, y_pred_prob)
-print(f"ROC-AUC: {auc_score:.2f}")
-
-fpr, tpr, _ = roc_curve(Ytest, y_pred_prob)
-plt.plot(fpr, tpr, label=f"SVM (AUC = {auc_score:.2f})")
-plt.plot([0, 1], [0, 1], 'k--', label="Random Chance")
-plt.xlabel("False Positive Rate")
-plt.ylabel("True Positive Rate")
-plt.title("ROC Curve")
-plt.legend()
-plt.show()
-
-#Model has an accuracy of 0.68 and an AUC of 0.71. Let's try to see what parameters we can optimize to improve predictive power.
-
-from sklearn.model_selection import GridSearchCV
-param_grid = {
-    'C': [0.1, 1, 10],
-    'kernel': ['linear', 'rbf'],
-    'gamma': ['scale', 'auto']
-}
-
-# Grid search
-grid_search = GridSearchCV(SVC(probability=True), param_grid, cv=5, scoring='roc_auc', n_jobs=-1)
-grid_search.fit(Xtrain_scaled, Ytrain)
-
-print("Best Parameters:", grid_search.best_params_)
-
-#Analysis and conclusion for SVM:
-#The target variable was Growing Stress similar to other binary models in this document. 
-#We've evaluated the performance of the model through metrics like accuracy (0.68) and AUC(0.71)
-#SVM has presented us with computational challanges likely due to the number of features, one-hot encoding, and data size
-#To mitigate that, we tried to tune our parameters (TBD) and did our SVM on a sample of the dataset(10%)
-#The difficulty and output leaves us wondering if SVM is the ideal model to move forward with
-# %%[]
