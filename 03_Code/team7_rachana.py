@@ -8,6 +8,7 @@ import seaborn as sns
 import altair as alt
 from scipy.stats import randint
 import os
+import plotly.graph_objects as go
 
 # prep
 from sklearn.model_selection import train_test_split
@@ -803,7 +804,7 @@ plt.show()
 
 # %%[markdown]
 # It seems that the treatment and Family History have high correlation,
-# Except those, all the other variables have donot seem to have a linear relationship with Growing Stress.
+# Except those, all the other variables have do not seem to have a linear relationship with Growing Stress.
 # Only Mental Health History has a slight correlation with Growing Stress
 
 # %%[markdown]
