@@ -678,12 +678,33 @@ color_palette = {
     1: 'rgba(255, 0, 0, 0.6)'        # Red for Growing Stress 1 with transparency
 }
 
+# Label mapping dictionary
+label_mappings = {
+    'Growing_Stress': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'Gender': {0: 'Male', 1: 'Female'},
+    'self_employed': {0: 'No', 1: 'Yes'},
+    'family_history': {0: 'No', 1: 'Yes'},
+    'treatment': {0: 'No', 1: 'Yes'},
+    'Days_Indoors' : {7.5: '1-14 days' , 22.5: '15-30 days', 45:'31-60 days', 60: 'More than 2 months', 365: 'Go out Every day'},
+    'Changes_Habits': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'Mood_Swings': {0: 'Low', 1: 'Medium', 2: 'High'},
+    'Mental_Health_History': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'Coping_Struggles': {0: 'No', 1: 'Yes'},
+    'Work_Interest': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'Social_Weakness': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'mental_health_interview': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'care_options': {0: 'No', 1: 'Yes', 2: 'Not sure'}
+}
+
+
+
 # Initialize a list to hold figures
 figures = []
 
 # Loop through each feature in health_data
+# Loop through each feature in health_data
 for feature in health_data.columns:
-    if feature not in ['Growing_Stress','Country']:  # Skip the Growing_Stress column
+    if feature not in ['Growing_Stress', 'Country']:  # Skip the Growing_Stress column
         # Calculate counts of Growing Stress for each category
         counts = health_data.groupby([feature, 'Growing_Stress']).size().unstack(fill_value=0)
         
@@ -696,9 +717,9 @@ for feature in health_data.columns:
         # Add traces for each Growing Stress value
         for stress_value in percentages.columns:
             fig.add_trace(go.Bar(
-                x=percentages.index,
+                x=percentages.index.map(lambda x: label_mappings[feature].get(x, x) if feature in label_mappings else x),  # Apply label mapping only if feature is in label_mappings
                 y=percentages[stress_value],
-                name=f'Growing Stress {stress_value}',
+                name=f'Growing Stress: {("No" if stress_value == 0 else "Yes")}',  # Change legend labels
                 marker_color=color_palette[stress_value],
                 text=[f"{val:.1f}%" for val in percentages[stress_value]],  # Percentage text
                 textposition='inside'  # Center the text inside the bars
@@ -713,7 +734,7 @@ for feature in health_data.columns:
             legend_title='Growing Stress',
             template='plotly_white',
             height=400,  # Adjust height for better visualization
-            margin=dict(l=40, r=40, t=40, b=40)  # Set margins
+            margin=dict(l=40, r=40, t=40, b=40)
         )
         
         # Add grid lines for better readability
@@ -731,11 +752,14 @@ for fig in figures:
 #%%[markdown] - Haeyeon
 # Insights from ditributions
 
-# Growing Stress vs Gender
-
 # Growing Stress vs Timestamp
+#The distribution differences across the years 2014, 2015, and 2016 are not significant. In all three years, the proportion of respondents answering "Yes" is slightly higher.
 
-# Growing Stress vs Occupation
+# Growing Stress vs Gender:
+# Within the same gender, for female, the proportion of those who answered "Yes" to growing stress is higher than that of men.
+
+# Growing Stress vs Occupation:
+# Among occupations, the highest proportion of "Yes" responses regarding growing stress is seen in the business, followed by the student occupation.
 
 # Growing Stress vs Self-employed
 
