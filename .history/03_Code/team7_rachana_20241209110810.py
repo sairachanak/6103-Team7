@@ -12,7 +12,7 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from sklearn.datasets import make_classification
-from sklearn.preprocessing import binarize, LabelEncoder, MinMaxScaler, StandardScaler, label_binarize
+from sklearn.preprocessing import binarize, LabelEncoder, MinMaxScaler
 from sklearn.preprocessing import OneHotEncoder
 
 #Featureimportance
@@ -25,7 +25,7 @@ from yellowbrick.model_selection import FeatureImportances
 from sklearn import metrics
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_recall_curve
 from sklearn.model_selection import cross_val_score
-from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, roc_auc_score, roc_curve
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
 
 #models
 from sklearn.linear_model import LogisticRegression
@@ -37,7 +37,7 @@ from sklearn.model_selection import RandomizedSearchCV
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Construct the full path to the CSV file
-csv_file_path = os.path.join(current_dir, "Mental Health Dataset.csv")
+csv_file_path = os.path.join(current_dir, "MentalHealth Dataset.csv")
 
 # Read the CSV file
 health_data = pd.read_csv(csv_file_path)
@@ -668,31 +668,31 @@ df.set_title('Growing stress by Gender ')
 #%%[markdown]
 
 # Group the data by 'Growing_Stress' and 'Days_Indoors' and count the occurrences
-#Icount = health_data.groupby(['Growing_Stress', 'Days_Indoors']).size().reset_index(name='Count')
+Icount = health_data.groupby(['Growing_Stress', 'Days_Indoors']).size().reset_index(name='Count')
 
 # Create the bar plot using Altair
-#import altair as alt
+import altair as alt
 
-#chart = alt.Chart(Icount).mark_bar().encode(
-#    x='Count:Q',
-#    y='Days_Indoors:N',
-#    color='Growing_Stress:N',
-#    tooltip=['Growing_Stress', 'Count']
-#).properties(
-#    title='Distribution of Growing Stress by Days Indoors',
-#    width=600,
-#    height=400
-#).configure_mark(
-#    opacity=0.7  # Subtle opacity for the bars
-#).configure_title(
-#    fontSize=18, 
-#    font='Arial', 
-#    anchor='middle', 
-#    color='gray'
-#)
+chart = alt.Chart(Icount).mark_bar().encode(
+    x='Count:Q',
+    y='Days_Indoors:N',
+    color='Growing_Stress:N',
+    tooltip=['Growing_Stress', 'Count']
+).properties(
+    title='Distribution of Growing Stress by Days Indoors',
+    width=600,
+    height=400
+).configure_mark(
+    opacity=0.7  # Subtle opacity for the bars
+).configure_title(
+    fontSize=18, 
+    font='Arial', 
+    anchor='middle', 
+    color='gray'
+)
 
 # Show the chart
-#chart.show()
+chart.show()
 # %%[markdown]
 # Growing stress by Days spent in indoors
 
@@ -1104,88 +1104,12 @@ for col in cols:
 #%%[markdown]
 # Before the unknown factor to create the normal model without the unknown factor
 
-#%%[markdown]
-# Random Forest -haeyeon
 
-# Create a copy of the health_data to avoid modifying the original
-health_data_copy = health_data.copy()
 
-# Filter data to only include students
-health_data_students = health_data_copy[health_data_copy['Occupation'] == 'Student']
 
-# Preprocessing the dataset
-# Drop 'Timestamp' and other irrelevant columns for prediction
-X = health_data_students.drop(['Growing_Stress', 'Timestamp', 'Country', 'Occupation'], axis=1)  # Drop target and irrelevant columns
-y = health_data_students['Growing_Stress']  # Target column
 
-# Convert categorical columns to numeric (if any)
-X = pd.get_dummies(X, drop_first=True)  # One-hot encoding for categorical features
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Scale the features (Important for Random Forest and other models)
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-# Train the Random Forest Classifier
-rf = RandomForestClassifier(n_estimators=100, random_state=42)
-rf.fit(X_train_scaled, y_train)
-
-# Get predicted probabilities for each class
-y_pred_proba = rf.predict_proba(X_test_scaled)
-
-# One-vs-Rest approach: Binarize the target labels for multiclass classification
-y_test_bin = label_binarize(y_test, classes=[0, 1, 2])  # Binarize the target labels (0, 1, 2)
-
-# Compute AUC for each class (One-vs-Rest)
-roc_auc = roc_auc_score(y_test_bin, y_pred_proba, average='macro', multi_class='ovr')
-
-# Plot the ROC curve for each class
-plt.figure(figsize=(8, 6))
-for i in range(3):  # 3 classes: 0, 1, and 2
-    fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_pred_proba[:, i])
-    plt.plot(fpr, tpr, lw=2, label=f'Class {i} (AUC = {roc_auc_score(y_test_bin[:, i], y_pred_proba[:, i]):.2f})')
-
-# Plot diagonal line for random classifier
-plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
-
-# Set plot labels and title
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Multiclass ROC Curve (One-vs-Rest) for Students')
-plt.legend(loc='lower right')
-plt.show()
-
-# Print the Macro AUC score
-print(f"Macro AUC-ROC score for Students: {roc_auc:.2f}")
-#%%[markdown]
-# A Macro AUC-ROC score of 1.00, might be because of Overfitting, Data Imbalance(Growing_Stress (with values 0, 1, 2)
-# We tried additioanl validation
-
-#%%[markdown]
-# Perform cross-validation (e.g., 5-fold)
-cv_scores = cross_val_score(rf, X, y, cv=5, scoring='roc_auc_ovr')
-print(f'Cross-validated AUC-ROC scores: {cv_scores}')
-print(f'Mean AUC-ROC score from cross-validation: {cv_scores.mean():.2f}')
-
-# Check Class Distribution
-print(y.value_counts())
-
-# Confusion Matrix
-# Generate confusion matrix
-cm = confusion_matrix(y_test, rf.predict(X_test_scaled))
-print(cm)
-
-#%%[markdown]
-# The AUC scores across folds range from 0.45 to 0.75, with a mean AUC of 0.62
-# Class 2: 22,915 samples, Class 1: 21,424 samples, Class 0: 16,348 samples <- little imblanced, but not extreme
-# Class 0 (Stress Level 0): The model has made no misclassifications, indicating that it is very confident when predicting the "no stress" class.
-# Class 1 (Stress Level 1): The model is performing fairly well, with a few misclassifications (12).
-# Class 2 (Stress Level 2): The model is performing quite well here too, with a very small number of misclassifications (17)
 
 
 
@@ -1207,12 +1131,9 @@ print(cm)
 
 #%%[markdown]
 # We have a the "unknown factor" quantifies the portion of the variance in Growing_Stress that is unexplained by the selected features.
-# (i) Calculate the weighted probability of all features, ensuring the total feature weights sum to 1 and the 
-# conditional probability if found for each feature.
+# (i) Calculate the weighted probability of all features, ensuring the total feature weights sum to 1.
 # (ii) If the total weights are less than 1, it indicates growing stress due to personal reasons. 
 # (iii) This suggests that an unknown factor is impacting the growing stress. And create a new feature unknown factor.
-# (iv) This will help us have a more certainity in Growing factor by utilising the unknown factor to bring the 
-# Growing stress from 3 classes to 2 classes
 # 
 #%%[markdown]
 #caluclate the conditional probability
@@ -1287,135 +1208,6 @@ print(final_df['unknown_factor'].median())
 threshold = final_df['unknown_factor'].median()
 
 print(threshold)
-
-
-
-# %%[markdown] - how to explain unknown factor by utilizing some visualization ---- start from haeyeon
-
-# 1. Distribution of Conditional Probabilities per Feature
-# Visualize how the conditional probability of each feature varies across the different values of Growing_Stress
-# Display the distribution of the conditional probabilities for each feature, so you can see how the features behave for each category of Growing_Stress (e.g., Yes, No).
-
-def plot_conditional_probability(feature, conditional_probs):
-    """
-    Plot the distribution of conditional probabilities for a specific feature across Growing_Stress classes.
-    """
-    plt.figure(figsize=(10, 6))
-    for target in conditional_probs[feature]:
-        values = list(conditional_probs[feature][target].values())
-        sns.histplot(values, kde=True, label=f'Growing_Stress {target}', color='blue' if target == 1 else 'orange')
-    
-    plt.title(f"Conditional Probability Distribution for {feature} by Growing_Stress")
-    plt.xlabel('Conditional Probability')
-    plt.ylabel('Frequency')
-    plt.legend()
-    plt.show()
-
-# Example: Visualizing conditional probabilities for the 'Occupation' feature
-plot_conditional_probability('Occupation', conditional_probs)
-
-
-# %%[markdown]
-# 2. Feature Weights Visualization
-# how each feature contributes to explaining the variance in Growing_Stress by showing the weights for each feature.
-# Show the weights calculated for each feature, indicating how much each feature contributes to the overall model
-
-def plot_feature_weights(weights):
-    """
-    Plot feature weights, which represent how much each feature contributes to the model.
-    """
-    # Flatten the feature weights for plotting
-    feature_names = list(weights[1].keys())
-    feature_weights = [weights[1][feature] + weights[0][feature] for feature in feature_names]  # Sum of weights for both Yes and No
-
-    # Plotting
-    plt.figure(figsize=(12, 6))
-    sns.barplot(x=feature_names, y=feature_weights, palette='viridis')
-    plt.title('Feature Weights for Growing_Stress')
-    plt.xlabel('Feature')
-    plt.ylabel('Weight')
-    plt.xticks(rotation=90)
-    plt.tight_layout()
-    plt.show()
-
-# Visualize feature weights for Growing_Stress
-plot_feature_weights(weights)
-print(final_df.columns)
-# %%[markdown]
-# 3. Unknown Factor Distribution
-# visualize its distribution to see how much it contributes to each data point.
-# Display the distribution of the unknown factor and compare it with the classification of Growing_Stress to see how the factor influences the classification
-
-def plot_unknown_factor_distribution(df):
-    """
-    Plot the distribution of the 'unknown_factor' and how it relates to 'Growing_Stress' classifications.
-    """
-    plt.figure(figsize=(10, 6))
-    sns.histplot(df['unknown_factor'], kde=True, color='green')
-    
-    plt.title('Distribution of Unknown Factor')
-    plt.xlabel('Unknown Factor')
-    plt.ylabel('Frequency')
-    
-    # Show how unknown_factor is related to Growing_Stress
-    plt.figure(figsize=(10, 6))
-    sns.boxplot(x='Growing_Stress', y='unknown_factor', data=df, palette='Set2')
-    plt.title('Unknown Factor by Growing_Stress Class')
-    plt.xlabel('Growing_Stress')
-    plt.ylabel('Unknown Factor')
-    plt.show()
-
-# Visualize the unknown factor distribution and how it relates to Growing_Stress
-plot_unknown_factor_distribution(final_df)
-
-# %%[markdown]
-# 4. Impact of Threshold on Classification
-# visualize how the unknown_factor affects the binary classification of Growing_Stress
-# plot a histogram of the unknown_factor values and use a threshold to split the data into 0 (No Stress) and 1 (Stress)
-# Display how the threshold (set to the median) splits the data into two categories, allowing you to visualize how the unknown_factor affects classification.
-
-def plot_threshold_impact(df, threshold):
-    """
-    Plot the impact of the threshold on Growing_Stress classification.
-    """
-    plt.figure(figsize=(10, 6))
-
-    # Plot the histogram of unknown_factor
-    sns.histplot(df['unknown_factor'], kde=True, color='purple', label='Unknown Factor', bins=30)
-
-    # Add threshold line
-    plt.axvline(x=threshold, color='red', linestyle='--', label=f'Threshold: {threshold:.2f}')
-    
-    # Display
-    plt.title('Impact of Threshold on Growing_Stress Classification')
-    plt.xlabel('Unknown Factor')
-    plt.ylabel('Frequency')
-    plt.legend()
-    plt.show()
-
-# Plot the impact of the threshold on the classification of Growing_Stress
-plot_threshold_impact(final_df, threshold)
-
-#%% [markdown]
-# 5. Final Classification Overview
-# After the transformation of Growing_Stress based on the unknown factor, we can visualize the final class distribution of Growing_Stress (either 0 or 1), comparing it to the original categories
-# Show the final distribution of Growing_Stress after applying the threshold to classify it into two categories (1 for stress, 0 for no stress)
-
-def plot_final_classification(final_df):
-    """
-    Visualize the final classification of Growing_Stress (0 or 1).
-    """
-    plt.figure(figsize=(8, 6))
-    sns.countplot(x='Growing_Stress', data=final_df, palette='pastel')
-    plt.title('Final Classification of Growing_Stress')
-    plt.xlabel('Growing_Stress')
-    plt.ylabel('Count')
-    plt.show()
-
-# Plot the final classification of Growing_Stress
-plot_final_classification(final_df)
-
-#%% [markdown] -- haeyeon end of unknown factor visualization
 
 #%%
 # Set threshold based on the mean or a slightly higher value
@@ -1701,124 +1493,34 @@ randomForest()
 # and have a familty hisroty of mental health could have more growing stress
 
 
-
-
-
 #%%SVM prep (Yonathan)
 
-'''Need to encode occupation since SVM takes numerical variables'''
-
-final_df_encoded = pd.get_dummies(final_df, columns=['Occupation'], drop_first=True)
-#First line returns us more variables (breaks variable down) with boolean values (True/False)
-#Need to convert into integer
-final_df_encoded[final_df_encoded.select_dtypes(include='bool').columns] = final_df_encoded.select_dtypes(include='bool').astype(int)
-
-#Check if it worked
-print(final_df_encoded.dtypes)
-#Yes it worked as of running the line (12/10). Now move forward to model building
-
-X_clean = X.dropna()
-y_clean = y[X_clean.index]
-
-
-#%%
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report, accuracy_score
-from sklearn.preprocessing import StandardScaler
 
+def train_svm():
+    # Instantiate the SVM model with kernel of choice (e.g., 'linear', 'rbf')
+    svm_model = SVC(kernel='linear', probability=True)
 
-'''There were some missing values for X so I will remove them in the previous cell'''
-X_clean = final_df_encoded.drop('Growing_Stress', axis=1).dropna()
-y_clean = final_df_encoded['Growing_Stress'][X_clean.index]
+    # Fit the model on the training data
+    svm_model.fit(Xtrain, Ytrain)
 
-#%%
-#from sklearn.model_selection import train_test_split
-#Xtrain, Xtest, Ytrain, Ytest = train_test_split(X_clean, y_clean, test_size=0.2, random_state=42)
+    # Predict the labels on the test set
+    y_pred_class = svm_model.predict(Xtest)
 
-#scaler = StandardScaler()
-#Xtrain_scaled = scaler.fit_transform(Xtrain)
-#Xtest_scaled = scaler.transform(Xtest)
+    # Evaluate the model
+    print("SVM Model Evaluation")
+    print("Accuracy:", accuracy_score(Ytest, y_pred_class))
+    print("Classification Report:\n", classification_report(Ytest, y_pred_class))
+    
+    # If needed, visualize the confusion matrix
+    sns.heatmap(metrics.confusion_matrix(Ytest, y_pred_class), annot=True, fmt="d")
+    plt.title("Confusion Matrix for SVM")
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.show()
 
-#svm_model = SVC(kernel='linear', C=1.0, gamma='scale', probability=True)
-#svm_model.fit(Xtrain_scaled, Ytrain)
+    return svm_model
 
-# Predictions
-#y_pred_class = svm_model.predict(Xtest_scaled)
-#y_pred_prob = svm_model.predict_proba(Xtest_scaled)[:, 1]
-
-# %%[markdown]
-# Is SVM model ideal for the dataset? SVM is more ideal for smaller datasets
-# Should I take a percentage of the data and test again to see if computation time lowers?
-
-'''New code to take random sample(10%) of the data'''
-X_clean_sampled = X_clean.sample(frac=0.1, random_state=42)
-y_clean_sampled = y_clean[X_clean_sampled.index]
-
-
-from sklearn.model_selection import train_test_split
-Xtrain, Xtest, Ytrain, Ytest = train_test_split(X_clean_sampled, y_clean_sampled, test_size=0.2, random_state=42)
-
-from sklearn.preprocessing import StandardScaler
-scaler = StandardScaler()
-Xtrain_scaled = scaler.fit_transform(Xtrain)
-Xtest_scaled = scaler.transform(Xtest)
-
-from sklearn.svm import SVC
-svm_model = SVC(kernel='linear', C=1.0, probability=True)
-svm_model.fit(Xtrain_scaled, Ytrain)
-
-
-# Predictions
-y_pred_class = svm_model.predict(Xtest_scaled)
-y_pred_prob = svm_model.predict_proba(Xtest_scaled)[:, 1]
-
-#%%[markdown]
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix, roc_auc_score, roc_curve
-import seaborn as sns
-import matplotlib.pyplot as plt
-accuracy = accuracy_score(Ytest, y_pred_class)
-print(f"Accuracy: {accuracy:.2f}")
-
-
-print("\nConfusion Matrix:")
-conf_matrix = confusion_matrix(Ytest, y_pred_class)
-sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues")
-plt.title("Confusion Matrix")
-plt.xlabel("Predicted")
-plt.ylabel("Actual")
-plt.show()
-
-auc_score = roc_auc_score(Ytest, y_pred_prob)
-print(f"ROC-AUC: {auc_score:.2f}")
-
-fpr, tpr, _ = roc_curve(Ytest, y_pred_prob)
-plt.plot(fpr, tpr, label=f"SVM (AUC = {auc_score:.2f})")
-plt.plot([0, 1], [0, 1], 'k--', label="Random Chance")
-plt.xlabel("False Positive Rate")
-plt.ylabel("True Positive Rate")
-plt.title("ROC Curve")
-plt.legend()
-plt.show()
-
-#Model has an accuracy of 0.68 and an AUC of 0.71. Let's try to see what parameters we can optimize to improve predictive power.
-
-from sklearn.model_selection import GridSearchCV
-param_grid = {
-    'C': [0.1, 1, 10],
-    'kernel': ['linear', 'rbf'],
-    'gamma': ['scale', 'auto']
-}
-
-# Grid search
-grid_search = GridSearchCV(SVC(probability=True), param_grid, cv=5, scoring='roc_auc', n_jobs=-1)
-grid_search.fit(Xtrain_scaled, Ytrain)
-
-print("Best Parameters:", grid_search.best_params_)
-
-#Analysis and conclusion for SVM:
-#The target variable was Growing Stress similar to other binary models in this document. 
-#We've evaluated the performance of the model through metrics like accuracy (0.68) and AUC(0.71)
-#SVM has presented us with computational challanges likely due to the number of features, one-hot encoding, and data size
-#To mitigate that, we tried to tune our parameters (TBD) and did our SVM on a sample of the dataset(10%)
-#The difficulty and output leaves us wondering if SVM is the ideal model to move forward with
-# %%[]
+svm_model = train_svm()
+# %%
