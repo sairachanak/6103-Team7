@@ -1191,28 +1191,18 @@ print(cm)
 
 
 
-# %%
-# Logisticregression before Uknown factor Abirham
+# %%[Logisticregression before Uknown factor]
+# Logistic Regression after Removing 'Maybe' from Growing_Stress
 # Logistic Regression after Removing 'Maybe' from Growing_Stress
 def logistic_regression_filtered():
     """
-    Train and evaluate logistic regression model after removing 'Maybe' from Growing_Stress with detailed evaluation.
+    Train and evaluate logistic regression model after removing 'Maybe' from Growing_Stress.
     """
     import pandas as pd
     from sklearn.linear_model import LogisticRegression
     from sklearn.model_selection import train_test_split
-    from sklearn.metrics import (
-        accuracy_score,
-        precision_score,
-        recall_score,
-        f1_score,
-        roc_auc_score,
-        roc_curve,
-        confusion_matrix,
-        classification_report
-    )
+    from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score, roc_curve
     import matplotlib.pyplot as plt
-    import seaborn as sns
 
     # Filter out 'Maybe' (2) from the Growing_Stress column
     filtered_data = health_data[health_data['Growing_Stress'] != 2]
@@ -1237,36 +1227,19 @@ def logistic_regression_filtered():
 
     # Evaluate Performance
     accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
-    roc_auc = roc_auc_score(y_test, y_pred_prob)
     conf_matrix = confusion_matrix(y_test, y_pred)
+    roc_auc = roc_auc_score(y_test, y_pred_prob)
 
     # Print Results
-    print("\nLogistic Regression Results (after removing 'Maybe'):")
-    print(f"Accuracy: {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall: {recall:.4f}")
-    print(f"F1-Score: {f1:.4f}")
-    print(f"ROC-AUC Score: {roc_auc:.4f}")
+    print("\nLogistic Regression Results (Filtered 'Maybe'):")
+    print(f"Accuracy: {accuracy}")
     print(f"Confusion Matrix:\n{conf_matrix}")
+    print(f"ROC-AUC Score: {roc_auc}")
 
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
-
-    # Confusion Matrix Visualization
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=['No', 'Yes'], yticklabels=['No', 'Yes'])
-    plt.title("Confusion Matrix")
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.show()
-
-    # ROC Curve Visualization
+    # Plot ROC Curve
     fpr, tpr, _ = roc_curve(y_test, y_pred_prob)
     plt.figure(figsize=(8, 6))
-    plt.plot(fpr, tpr, label=f"ROC curve (AUC = {roc_auc:.2f})")
+    plt.plot(fpr, tpr, label=f"ROC curve (area = {roc_auc:.2f})")
     plt.plot([0, 1], [0, 1], 'k--')
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
@@ -1278,276 +1251,114 @@ def logistic_regression_filtered():
 logistic_regression_filtered()
 
 
-
-
-
-# %%
-def knn_before_unknown_factor():
-    """
-    Train and evaluate KNN model before considering the unknown factor, with detailed metrics and measures to address overfitting.
-    """
-    from sklearn.neighbors import KNeighborsClassifier
-    from sklearn.model_selection import train_test_split
-    from sklearn.metrics import (
-        accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve, confusion_matrix, classification_report
-    )
-    from sklearn.preprocessing import StandardScaler
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    import pandas as pd
-
-    # Filter out 'Maybe' (2) from the Growing_Stress column
-    filtered_data = health_data[health_data['Growing_Stress'] != 2]
-
-    # Drop non-numeric columns and target variable
-    X_filtered = filtered_data.drop(['Growing_Stress', 'Timestamp', 'Country', 'Occupation'], axis=1, errors='ignore')
-    y_filtered = filtered_data['Growing_Stress']
-
-    # Encode categorical variables
-    X_filtered = pd.get_dummies(X_filtered, drop_first=True)
-
-    # Feature Scaling
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X_filtered)
-
-    # Train-Test Split
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y_filtered, test_size=0.2, random_state=42)
-
-    # Train KNN Model with adjusted parameters to reduce overfitting
-    knn_model = KNeighborsClassifier(n_neighbors=30, weights='distance')
-    knn_model.fit(X_train, y_train)
-  
-    # Predictions
-    y_pred = knn_model.predict(X_test)
-    y_pred_prob = knn_model.predict_proba(X_test)[:, 1]
-
-    # Evaluate Performance
-    accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
-    roc_auc = roc_auc_score(y_test, y_pred_prob)
-    conf_matrix = confusion_matrix(y_test, y_pred)
-
-    # Print Results
-    print("\nKNN Results (Before Unknown Factor):")
-    print(f"Accuracy: {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall: {recall:.4f}")
-    print(f"F1-Score: {f1:.4f}")
-    print(f"ROC-AUC Score: {roc_auc:.4f}")
-    print(f"Confusion Matrix:\n{conf_matrix}")
-
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
-  # Confusion Matrix Visualization
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=['No', 'Yes'], yticklabels=['No', 'Yes'])
-    plt.title("Confusion Matrix")
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.show()
-
-    # ROC Curve Visualization
-    fpr, tpr, _ = roc_curve(y_test, y_pred_prob)
-    plt.figure(figsize=(8, 6))
-    plt.plot(fpr, tpr, label=f"ROC curve (AUC = {roc_auc:.2f})")
-    plt.plot([0, 1], [0, 1], 'k--')
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.title("ROC Curve (Before Unknown Factor)")
-    plt.legend(loc="lower right")
-    plt.show()
-knn_before_unknown_factor()
-# %%
-def knn_before_unknown_factor():
-    """
-    Train and evaluate KNN model before considering the unknown factor, with detailed metrics and measures to address overfitting.
-    """
-    from sklearn.neighbors import KNeighborsClassifier
-    from sklearn.model_selection import train_test_split, cross_val_score
-    from sklearn.metrics import (
-        accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve, confusion_matrix, classification_report
-    )
-    from sklearn.preprocessing import StandardScaler
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    import pandas as pd
-    import numpy as np
-
-    # Filter out 'Maybe' (2) from the Growing_Stress column
-    filtered_data = health_data[health_data['Growing_Stress'] != 2]
-
-    # Drop non-numeric columns and target variable
-    X_filtered = filtered_data.drop(['Growing_Stress', 'Timestamp', 'Country', 'Occupation'], axis=1, errors='ignore')
-    y_filtered = filtered_data['Growing_Stress']
-
-    # Encode categorical variables
-    X_filtered = pd.get_dummies(X_filtered, drop_first=True)
-
-    # Feature Scaling
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X_filtered)
-
-    # Train-Test Split
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y_filtered, test_size=0.2, random_state=42)
-
-    # Train KNN Model with adjusted parameters to reduce overfitting
-    knn_model = KNeighborsClassifier(n_neighbors=30, weights='distance')
-    knn_model.fit(X_train, y_train)
-
-    # Cross-Validation
-    cross_val_scores = cross_val_score(knn_model, X_scaled, y_filtered, cv=5, scoring='accuracy')
-    print(f"Cross-Validation Accuracy (5-Fold): {np.mean(cross_val_scores):.4f}")
-
-    # Predictions
-    y_pred = knn_model.predict(X_test)
-    y_pred_prob = knn_model.predict_proba(X_test)[:, 1]
-
-    # Evaluate Performance
-    accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
-    roc_auc = roc_auc_score(y_test, y_pred_prob)
-    conf_matrix = confusion_matrix(y_test, y_pred)
-
-    # Print Results
-    print("\nKNN Results (Before Unknown Factor):")
-    print(f"Accuracy: {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall: {recall:.4f}")
-    print(f"F1-Score: {f1:.4f}")
-    print(f"ROC-AUC Score: {roc_auc:.4f}")
-    print(f"Confusion Matrix:\n{conf_matrix}")
-
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
-
-    # Confusion Matrix Visualization
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=['No', 'Yes'], yticklabels=['No', 'Yes'])
-    plt.title("Confusion Matrix")
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.show()
-
-    # ROC Curve Visualization
-    fpr, tpr, _ = roc_curve(y_test, y_pred_prob)
-    plt.figure(figsize=(8, 6))
-    plt.plot(fpr, tpr, label=f"ROC curve (AUC = {roc_auc:.2f})")
-    plt.plot([0, 1], [0, 1], 'k--')
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.title("ROC Curve (Before Unknown Factor)")
-    plt.legend(loc="lower right")
-    plt.show()
-
-# Call the functions to train and evaluate KNN models
-knn_before_unknown_factor()
-
-# %%[markdown]
-# The model accuracy is to high and it seems there is overfitting 
-
-
 # %%
 
-# Filter out 'Maybe' (2) from the Growing_Stress column
-filtered_data = health_data[health_data['Growing_Stress'] != 2]
-numeric_data = filtered_data.select_dtypes(include=['number'])
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    roc_curve,
+    confusion_matrix,
+    classification_report,
+)
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
 
-# Calculate correlation
-corr_matrix = numeric_data.corr()
-print(corr_matrix['Growing_Stress'].sort_values(ascending=False))
-# %%[markdown]
-# from the correlation matrix it show that there is no strong correlation between the growing stress and other predictors and I just want to try by selecting important features
-# %%
-def knn_before_unknown_factor_with_feature_selection():
+def evalClassModel(model, y_test, y_pred_class, y_pred_prob, plot=False):
     """
-    Train and evaluate KNN model before considering the unknown factor,
-    using only features with significant correlation.
+    Evaluate a classification model.
+    
+    Parameters:
+    - model: Trained model to evaluate.
+    - y_test: True labels for the test set.
+    - y_pred_class: Predicted class labels.
+    - y_pred_prob: Predicted probabilities for the positive class.
+    - plot: Whether to generate visualizations (default=False).
     """
-    from sklearn.neighbors import KNeighborsClassifier
-    from sklearn.model_selection import train_test_split, cross_val_score
-    from sklearn.metrics import (
-        accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve, confusion_matrix, classification_report
-    )
-    from sklearn.preprocessing import StandardScaler
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    import pandas as pd
-    import numpy as np
+    # Classification accuracy
+    accuracy = accuracy_score(y_test, y_pred_class)
+    print('Accuracy:', accuracy)
 
-    # Filter out 'Maybe' (2) from the Growing_Stress column
-    filtered_data = health_data[health_data['Growing_Stress'] != 2]
+    # Null accuracy
+    print('Null accuracy (most frequent class):', max(y_test.mean(), 1 - y_test.mean()))
 
-    # Select features with significant correlation
-    selected_features = ['Changes_Habits', 'Gender', 'Mental_Health_History', 'Social_Weakness']
-    X_filtered = filtered_data[selected_features]
-    y_filtered = filtered_data['Growing_Stress']
+    # Precision, Recall, F1-Score
+    precision = precision_score(y_test, y_pred_class, average='binary')
+    recall = recall_score(y_test, y_pred_class, average='binary')
+    f1 = f1_score(y_test, y_pred_class, average='binary')
 
-    # Feature Scaling
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X_filtered)
+    print(f'Precision: {precision:.4f}')
+    print(f'Recall: {recall:.4f}')
+    print(f'F1-Score: {f1:.4f}')
 
-    # Train-Test Split
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y_filtered, test_size=0.2, random_state=42)
+    # ROC-AUC
+    auc = roc_auc_score(y_test, y_pred_prob)
+    print(f'ROC-AUC Score: {auc:.4f}')
 
-    # Train KNN Model with adjusted parameters
-    knn_model = KNeighborsClassifier(n_neighbors=30, weights='distance')
-    knn_model.fit(X_train, y_train)
+    # Confusion matrix
+    confusion = confusion_matrix(y_test, y_pred_class)
+    print('Confusion Matrix:\n', confusion)
 
-    # Cross-Validation
-    cross_val_scores = cross_val_score(knn_model, X_scaled, y_filtered, cv=5, scoring='accuracy')
-    print(f"Cross-Validation Accuracy (5-Fold): {np.mean(cross_val_scores):.4f}")
+    # TP, TN, FP, FN
+    TN, FP, FN, TP = confusion.ravel()
+    print(f'TP: {TP}, TN: {TN}, FP: {FP}, FN: {FN}')
 
-    # Predictions
-    y_pred = knn_model.predict(X_test)
-    y_pred_prob = knn_model.predict_proba(X_test)[:, 1]
+    # Classification error and false positive rate
+    classification_error = (FP + FN) / float(TP + TN + FP + FN)
+    false_positive_rate = FP / float(TN + FP)
+    print(f'Classification Error: {classification_error:.4f}')
+    print(f'False Positive Rate: {false_positive_rate:.4f}')
 
-    # Evaluate Performance
-    accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
-    roc_auc = roc_auc_score(y_test, y_pred_prob)
-    conf_matrix = confusion_matrix(y_test, y_pred)
+    # Optional plots
+    if plot:
+        # Confusion matrix heatmap
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(confusion, annot=True, fmt="d", cmap="Blues", xticklabels=['No', 'Yes'], yticklabels=['No', 'Yes'])
+        plt.title('Confusion Matrix')
+        plt.xlabel('Predicted')
+        plt.ylabel('Actual')
+        plt.show()
 
-    # Print Results
-    print("\nKNN Results (Before Unknown Factor with Feature Selection):")
-    print(f"Accuracy: {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall: {recall:.4f}")
-    print(f"F1-Score: {f1:.4f}")
-    print(f"ROC-AUC Score: {roc_auc:.4f}")
-    print(f"Confusion Matrix:\n{conf_matrix}")
+        # ROC Curve
+        fpr, tpr, thresholds = roc_curve(y_test, y_pred_prob)
+        plt.figure(figsize=(8, 6))
+        plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {auc:.2f})')
+        plt.plot([0, 1], [0, 1], 'k--')
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('ROC Curve')
+        plt.legend(loc='lower right')
+        plt.show()
 
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
+    return {
+        'accuracy': accuracy,
+        'precision': precision,
+        'recall': recall,
+        'f1_score': f1,
+        'roc_auc': auc,
+        'classification_error': classification_error,
+        'confusion_matrix': confusion,
+    }
 
-    # Confusion Matrix Visualization
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=['No', 'Yes'], yticklabels=['No', 'Yes'])
-    plt.title("Confusion Matrix")
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.show()
+# Example usage with the working logistic regression model
+y_pred = logit_model.predict(X_test)  # Predicted class labels
+y_pred_prob = logit_model.predict_proba(X_test)[:, 1]  # Predicted probabilities for positive class
 
-    # ROC Curve Visualization
-    fpr, tpr, _ = roc_curve(y_test, y_pred_prob)
-    plt.figure(figsize=(8, 6))
-    plt.plot(fpr, tpr, label=f"ROC curve (AUC = {roc_auc:.2f})")
-    plt.plot([0, 1], [0, 1], 'k--')
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.title("ROC Curve (Before Unknown Factor with Feature Selection)")
-    plt.legend(loc="lower right")
-    plt.show()
+results = evalClassModel(logit_model, y_test, y_pred, y_pred_prob, plot=True)
 
-# Call the function
-knn_before_unknown_factor_with_feature_selection()
-# %%[markdown]
-# The performance reduced now but not strong as I selected only 'Changes_Habits', 'Gender', 'Mental_Health_History', 'Social_Weakness'
+
+
+
+
+
+
+
+
+
+
 
 #%%[markdown]
 # We have a the "unknown factor" quantifies the portion of the variance in Growing_Stress that is unexplained by the selected features.
@@ -2051,87 +1862,5 @@ test_accuracy = accuracy_score(y_test, y_test_pred)
 
 best_params, best_score, test_accuracy
 
-
-# %%
-# KNN after unkown factor Abirham
-def knn_model():
-    """
-    Train and evaluate KNN model using the original encoded_final_df.
-    """
-    from sklearn.neighbors import KNeighborsClassifier
-    from sklearn.model_selection import train_test_split, cross_val_score
-    from sklearn.metrics import (
-        accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve, confusion_matrix, classification_report
-    )
-    from sklearn.preprocessing import StandardScaler
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    import pandas as pd
-    import numpy as np
-
-    # Use encoded_final_df as prepared in the original script
-    X = encoded_final_df.drop(['Growing_Stress'], axis=1)
-    y = encoded_final_df['Growing_Stress']
-
-    # Feature Scaling
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-
-    # Train-Test Split
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
-
-    # Train KNN Model with adjusted parameters
-    knn_model = KNeighborsClassifier(n_neighbors=30, weights='distance')
-    knn_model.fit(X_train, y_train)
-
-    # Cross-Validation
-    cross_val_scores = cross_val_score(knn_model, X_scaled, y, cv=5, scoring='accuracy')
-    print(f"Cross-Validation Accuracy (5-Fold): {np.mean(cross_val_scores):.4f}")
-
-    # Predictions
-    y_pred = knn_model.predict(X_test)
-    y_pred_prob = knn_model.predict_proba(X_test)[:, 1]
-
-    # Evaluate Performance
-    accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
-    roc_auc = roc_auc_score(y_test, y_pred_prob)
-    conf_matrix = confusion_matrix(y_test, y_pred)
-
-    # Print Results
-    print("\nKNN Results (Using encoded_final_df):")
-    print(f"Accuracy: {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall: {recall:.4f}")
-    print(f"F1-Score: {f1:.4f}")
-    print(f"ROC-AUC Score: {roc_auc:.4f}")
-    print(f"Confusion Matrix:\n{conf_matrix}")
-
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
-
-    # Confusion Matrix Visualization
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=['No', 'Yes'], yticklabels=['No', 'Yes'])
-    plt.title("Confusion Matrix")
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.show()
-
-    # ROC Curve Visualization
-    fpr, tpr, _ = roc_curve(y_test, y_pred_prob)
-    plt.figure(figsize=(8, 6))
-    plt.plot(fpr, tpr, label=f"ROC curve (AUC = {roc_auc:.2f})")
-    plt.plot([0, 1], [0, 1], 'k--')
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.title("ROC Curve (Using encoded_final_df)")
-    plt.legend(loc="lower right")
-    plt.show()
-
-# Call the function
-knn_model()
 
 # %%

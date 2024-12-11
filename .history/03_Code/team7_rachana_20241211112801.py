@@ -1192,7 +1192,7 @@ print(cm)
 
 
 # %%
-# Logisticregression before Uknown factor Abirham
+# Logisticregression before Uknown factor
 # Logistic Regression after Removing 'Maybe' from Growing_Stress
 def logistic_regression_filtered():
     """

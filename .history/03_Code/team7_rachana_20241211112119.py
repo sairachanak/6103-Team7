@@ -1192,7 +1192,7 @@ print(cm)
 
 
 # %%
-# Logisticregression before Uknown factor Abirham
+# Logisticregression before Uknown factor
 # Logistic Regression after Removing 'Maybe' from Growing_Stress
 def logistic_regression_filtered():
     """
@@ -2053,7 +2053,6 @@ best_params, best_score, test_accuracy
 
 
 # %%
-# KNN after unkown factor Abirham
 def knn_model():
     """
     Train and evaluate KNN model using the original encoded_final_df.
@@ -2132,6 +2131,4 @@ def knn_model():
     plt.show()
 
 # Call the function
-knn_model()
-
-# %%
+knn_with_encoded_final_df()
