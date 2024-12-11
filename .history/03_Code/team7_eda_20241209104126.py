@@ -78,7 +78,7 @@ invalid_timestamps, rows_with_missing_self_employed, remaining_rows_if_dropped
 # Distribution of Mental Health Treatment Across Countries
 treatment_by_country = mental_health_data['Country'].value_counts().reset_index()
 treatment_by_country.columns = ['Country', 'Count']
-treatment_by_country = treatment_by_country.head(12)
+treatment_by_country = treatment_by_country.head(10)
 chart1 = alt.Chart(treatment_by_country).mark_bar().encode(
     x=alt.X('Country:N', sort='-y', title='Country'),  
     y=alt.Y('Count:Q', title='Count'),
