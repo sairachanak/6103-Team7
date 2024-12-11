@@ -1652,4 +1652,4 @@ svm_model.fit(Xtrain_scaled, Ytrain)
 # Predictions
 y_pred_class = svm_model.predict(Xtest_scaled)
 y_pred_prob = svm_model.predict_proba(Xtest_scaled)[:, 1]
-# %%[]
+# 
