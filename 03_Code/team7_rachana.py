@@ -1188,6 +1188,169 @@ print(cm)
 # Class 2 (Stress Level 2): The model is performing quite well here too, with a very small number of misclassifications (17)
 
 
+# %%
+# Logisticregression before Uknown factor -Abirham
+# Logistic Regression after Removing 'Maybe' from Growing_Stress
+def logistic_regression_filtered():
+    """
+    Train and evaluate logistic regression model after removing 'Maybe' from Growing_Stress with detailed evaluation.
+    """
+    import pandas as pd
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import (
+        accuracy_score,
+        precision_score,
+        recall_score,
+        f1_score,
+        roc_auc_score,
+        roc_curve,
+        confusion_matrix,
+        classification_report
+    )
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    # Filter out 'Maybe' (2) from the Growing_Stress column
+    filtered_data = health_data[health_data['Growing_Stress'] != 2]
+
+    # Drop non-numeric columns and target variable
+    X_filtered = filtered_data.drop(['Growing_Stress', 'Timestamp', 'Country', 'Occupation'], axis=1, errors='ignore')
+    y_filtered = filtered_data['Growing_Stress']
+
+    # Encode categorical variables
+    X_filtered = pd.get_dummies(X_filtered, drop_first=True)
+
+    # Train-Test Split
+    X_train, X_test, y_train, y_test = train_test_split(X_filtered, y_filtered, test_size=0.2, random_state=42)
+
+    # Train Logistic Regression Model
+    logit_model = LogisticRegression(max_iter=1000, random_state=42)
+    logit_model.fit(X_train, y_train)
+
+    # Predictions
+    y_pred = logit_model.predict(X_test)
+    y_pred_prob = logit_model.predict_proba(X_test)[:, 1]
+
+    # Evaluate Performance
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+    roc_auc = roc_auc_score(y_test, y_pred_prob)
+    conf_matrix = confusion_matrix(y_test, y_pred)
+
+    # Print Results
+    print("\nLogistic Regression Results (after removing 'Maybe'):")
+    print(f"Accuracy: {accuracy:.4f}")
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1-Score: {f1:.4f}")
+    print(f"ROC-AUC Score: {roc_auc:.4f}")
+    print(f"Confusion Matrix:\n{conf_matrix}")
+
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred))
+
+    # Confusion Matrix Visualization
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=['No', 'Yes'], yticklabels=['No', 'Yes'])
+    plt.title("Confusion Matrix")
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.show()
+
+    # ROC Curve Visualization
+    fpr, tpr, _ = roc_curve(y_test, y_pred_prob)
+    plt.figure(figsize=(8, 6))
+    plt.plot(fpr, tpr, label=f"ROC curve (AUC = {roc_auc:.2f})")
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("ROC Curve (Filtered 'Maybe')")
+    plt.legend(loc="lower right")
+    plt.show()
+
+# Call the function to train and evaluate the logistic regression model
+logistic_regression_filtered()
+
+# %%
+
+def knn_before_unknown_factor():
+    """
+    Train and evaluate KNN model before considering the unknown factor, with detailed metrics.
+    """
+    from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import (
+        accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve, confusion_matrix, classification_report
+    )
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import pandas as pd
+
+    # Filter out 'Maybe' (2) from the Growing_Stress column
+    filtered_data = health_data[health_data['Growing_Stress'] != 2]
+
+    # Drop non-numeric columns and target variable
+    X_filtered = filtered_data.drop(['Growing_Stress', 'Timestamp', 'Country', 'Occupation'], axis=1, errors='ignore')
+    y_filtered = filtered_data['Growing_Stress']
+
+    # Encode categorical variables
+    X_filtered = pd.get_dummies(X_filtered, drop_first=True)
+
+    # Train-Test Split
+    X_train, X_test, y_train, y_test = train_test_split(X_filtered, y_filtered, test_size=0.2, random_state=42)
+
+    # Train KNN Model
+    knn_model = KNeighborsClassifier(n_neighbors=5)
+    knn_model.fit(X_train, y_train)
+
+    # Predictions
+    y_pred = knn_model.predict(X_test)
+    y_pred_prob = knn_model.predict_proba(X_test)[:, 1]
+
+    # Evaluate Performance
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+    roc_auc = roc_auc_score(y_test, y_pred_prob)
+    conf_matrix = confusion_matrix(y_test, y_pred)
+
+    # Print Results
+    print("\nKNN Results (Before Unknown Factor):")
+    print(f"Accuracy: {accuracy:.4f}")
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1-Score: {f1:.4f}")
+    print(f"ROC-AUC Score: {roc_auc:.4f}")
+    print(f"Confusion Matrix:\n{conf_matrix}")
+
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred))
+
+    # Confusion Matrix Visualization
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=['No', 'Yes'], yticklabels=['No', 'Yes'])
+    plt.title("Confusion Matrix")
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.show()
+
+    # ROC Curve Visualization
+    fpr, tpr, _ = roc_curve(y_test, y_pred_prob)
+    plt.figure(figsize=(8, 6))
+    plt.plot(fpr, tpr, label=f"ROC curve (AUC = {roc_auc:.2f})")
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("ROC Curve (Before Unknown Factor)")
+    plt.legend(loc="lower right")
+    plt.show()
+knn_before_unknown_factor()
+
+
 
 
 
