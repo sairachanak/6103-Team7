@@ -9,6 +9,7 @@ import altair as alt
 from scipy.stats import randint
 import plotly.graph_objects as go
 import os
+import plotly.graph_objects as go
 
 # prep
 from sklearn.model_selection import train_test_split
@@ -28,6 +29,7 @@ from scipy.stats import spearmanr
 
 # Validation libraries
 from sklearn import metrics
+from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_recall_curve
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, roc_auc_score, roc_curve
@@ -678,12 +680,32 @@ color_palette = {
     1: 'rgba(255, 0, 0, 0.6)'        # Red for Growing Stress 1 with transparency
 }
 
+# Label mapping dictionary
+label_mappings = {
+    'Growing_Stress': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'Gender': {0: 'Male', 1: 'Female'},
+    'self_employed': {0: 'No', 1: 'Yes'},
+    'family_history': {0: 'No', 1: 'Yes'},
+    'treatment': {0: 'No', 1: 'Yes'},
+    'Days_Indoors' : {7.5: '1-14 days' , 22.5: '15-30 days', 45:'31-60 days', 60: 'More than 2 months', 365: 'Go out Every day'},
+    'Changes_Habits': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'Mood_Swings': {0: 'Low', 1: 'Medium', 2: 'High'},
+    'Mental_Health_History': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'Coping_Struggles': {0: 'No', 1: 'Yes'},
+    'Work_Interest': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'Social_Weakness': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'mental_health_interview': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'care_options': {0: 'No', 1: 'Yes', 2: 'Not sure'}
+}
+
+
+
 # Initialize a list to hold figures
 figures = []
 
 # Loop through each feature in health_data
 for feature in health_data.columns:
-    if feature not in ['Growing_Stress','Country']:  # Skip the Growing_Stress column
+    if feature not in ['Growing_Stress', 'Country']:  # Skip the Growing_Stress column
         # Calculate counts of Growing Stress for each category
         counts = health_data.groupby([feature, 'Growing_Stress']).size().unstack(fill_value=0)
         
@@ -696,9 +718,9 @@ for feature in health_data.columns:
         # Add traces for each Growing Stress value
         for stress_value in percentages.columns:
             fig.add_trace(go.Bar(
-                x=percentages.index,
+                x=percentages.index.map(lambda x: label_mappings[feature].get(x, x) if feature in label_mappings else x),  # Apply label mapping only if feature is in label_mappings
                 y=percentages[stress_value],
-                name=f'Growing Stress {stress_value}',
+                name=f'Growing Stress: {("No" if stress_value == 0 else "Yes")}',  # Change legend labels
                 marker_color=color_palette[stress_value],
                 text=[f"{val:.1f}%" for val in percentages[stress_value]],  # Percentage text
                 textposition='inside'  # Center the text inside the bars
@@ -713,7 +735,7 @@ for feature in health_data.columns:
             legend_title='Growing Stress',
             template='plotly_white',
             height=400,  # Adjust height for better visualization
-            margin=dict(l=40, r=40, t=40, b=40)  # Set margins
+            margin=dict(l=40, r=40, t=40, b=40)
         )
         
         # Add grid lines for better readability
@@ -731,11 +753,14 @@ for fig in figures:
 #%%[markdown] - Haeyeon
 # Insights from ditributions
 
-# Growing Stress vs Gender
-
 # Growing Stress vs Timestamp
+#The distribution differences across the years 2014, 2015, and 2016 are not significant. In all three years, the proportion of respondents answering "Yes" is slightly higher.
 
-# Growing Stress vs Occupation
+# Growing Stress vs Gender:
+# Within the same gender, for female, the proportion of those who answered "Yes" to growing stress is higher than that of men.
+
+# Growing Stress vs Occupation:
+# Among occupations, the highest proportion of "Yes" responses regarding growing stress is seen in the business, followed by the student occupation.
 
 # Growing Stress vs Self-employed
 
@@ -762,6 +787,9 @@ for fig in figures:
 # Growing Stress vs Care options
 
 #%%[markdown]
+# Copy dataset for trying different Smart question
+health_data_backup = health_data.copy()
+
 # One - Hot Encoding the Occupation column
 final_df = health_data.drop(columns=['Country'])
 final_df['Occupation'] = final_df['Occupation'].astype(str)
@@ -771,6 +799,9 @@ categorical_columns = final_df.select_dtypes(include=['object']).columns.tolist(
 occupation_encoded = pd.get_dummies(final_df['Occupation'], prefix='Occupation', drop_first=True)
 encoded_final_df = pd.concat([final_df.drop('Occupation', axis=1), occupation_encoded], axis=1)
 encoded_final_df.head()
+
+
+
 
 # %%[markdown]
 # Correlation Matrix
@@ -804,7 +835,7 @@ plt.show()
 
 # %%[markdown]
 # It seems that the treatment and Family History have high correlation,
-# Except those, all the other variables have donot seem to have a linear relationship with Growing Stress.
+# Except those, all the other variables have do not seem to have a linear relationship with Growing Stress.
 # Only Mental Health History has a slight correlation with Growing Stress
 
 # %%[markdown]
@@ -1033,7 +1064,8 @@ visualizer.show()
 
 
 # %%[markdown]
-# Desciion Tree
+# %%[markdown]
+# Desciion Tree Before Regularization
 
 target = encoded_final_df['Growing_Stress']
 
@@ -1041,7 +1073,7 @@ target = encoded_final_df['Growing_Stress']
 features = encoded_final_df.drop(['Growing_Stress'], axis=1)
 
 # Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.5, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=0)
 
 # Initialize the Decision Tree Classifier
 clf = DTC(criterion='entropy', random_state=0)
@@ -1061,7 +1093,7 @@ print(f'Residual Deviance: {resid_dev}')
 ax = subplots(figsize=(12, 12))[1]
 plot_tree(clf, feature_names=features.columns, ax=ax)
 
-#%%
+# %%[markdown]
 
 
 # Section 2: Cross-Validation and Pruning
@@ -1071,12 +1103,12 @@ from sklearn.model_selection import KFold
 ccp_path = clf.cost_complexity_pruning_path(X_train, y_train)
 
 # Initialize KFold for cross-validation
-kfold = KFold(n_splits=10, random_state=1, shuffle=True)
+kfold = KFold(n_splits=5, random_state=1, shuffle=True)
 
 
-#%%
+# %%[markdown]
 # Section 3: Grid Search for Optimal Alpha
-from sklearn.model_selection import GridSearchCV
+
 
 # Grid search for optimal alpha
 grid = GridSearchCV(clf, {'ccp_alpha': ccp_path.ccp_alphas}, refit=True, cv=kfold, scoring='accuracy')
@@ -1091,7 +1123,7 @@ ax = subplots(figsize=(12, 12))[1]
 plot_tree(best_clf, feature_names=features.columns, ax=ax)
 
 
-#%%
+# %%[markdown]
 
 # Section 4: Evaluating the Best Estimator
 # Evaluate the best estimator
@@ -1102,6 +1134,577 @@ print(f'Best Estimator Accuracy: {best_accuracy}')
 best_confusion = confusion_matrix(y_test, best_clf.predict(X_test))
 print("Best Estimator Confusion Matrix:")
 print(best_confusion)
+
+# %%[markdown]
+# Though this looks like a pretty good model, it sems to be overfitting,
+# better todo some regularisation by decreasing the depth of the tree
+
+# %%[markdown]
+# Descision Tree After Regularisation
+# Step 1 : Fix depth of the tree and min_samples_split and leaf
+
+# Define the target and features
+target = encoded_final_df['Growing_Stress']
+features = encoded_final_df.drop(['Growing_Stress'], axis=1)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=0)
+
+# While going through all the depth values, this seems to give the best model
+clf = DTC(criterion='entropy', 
+          max_depth=8,              
+          min_samples_split = 20,     
+          min_samples_leaf = 10,       
+          random_state=0)
+
+# %%[markdown]
+# Step 2 : Evaluation of the model using train and test logloss using 5-fold cross validation
+
+# Track log loss for training and testing
+train_log_losses = []
+test_log_losses = []
+max_log_loss_diff = float('-inf')  # Initialize to negative infinity
+best_params_log_loss_diff = {}
+
+# KFold for cross-validation
+kfold = KFold(n_splits=5, random_state=1, shuffle=True)
+
+# Perform K-Fold Cross-Validation to compute log loss
+for train_index, test_index in kfold.split(features):
+    X_fold_train, X_fold_test = features.iloc[train_index], features.iloc[test_index]
+    y_fold_train, y_fold_test = target.iloc[train_index], target.iloc[test_index]
+    
+    clf.fit(X_fold_train, y_fold_train)
+    
+    # Log loss for training data
+    train_pred_proba = clf.predict_proba(X_fold_train)
+    train_log_loss = log_loss(y_fold_train, train_pred_proba)
+    train_log_losses.append(train_log_loss)
+    
+    # Log loss for testing data
+    test_pred_proba = clf.predict_proba(X_fold_test)
+    test_log_loss = log_loss(y_fold_test, test_pred_proba)
+    test_log_losses.append(test_log_loss)
+
+    # Calculate the difference between training and testing log loss
+    log_loss_diff = train_log_loss - test_log_loss
+    if log_loss_diff > max_log_loss_diff:
+        max_log_loss_diff = log_loss_diff
+        best_params_log_loss_diff['train_log_loss'] = train_log_loss
+        best_params_log_loss_diff['test_log_loss'] = test_log_loss
+        best_params_log_loss_diff['params'] = (clf.max_depth, clf.min_samples_split, clf.min_samples_leaf)
+
+# Average log losses
+average_train_log_loss = np.mean(train_log_losses)
+average_test_log_loss = np.mean(test_log_losses)
+
+print(f'Average Training Log Loss: {average_train_log_loss}')
+print(f'Average Testing Log Loss: {average_test_log_loss}')
+print(f'Best Parameters for Max Log Loss Difference: {best_params_log_loss_diff}')
+
+# Plotting training and testing log loss
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, len(train_log_losses) + 1), train_log_losses, marker='o', label='Training Log Loss')
+plt.plot(range(1, len(test_log_losses) + 1), test_log_losses, marker='x', label='Testing Log Loss')
+plt.title('Log Loss Comparison: Training vs Testing')
+plt.xlabel('Fold Number')
+plt.ylabel('Log Loss')
+plt.legend()
+plt.grid()
+plt.show()
+
+# %%[markdown]
+# From this it could be observed that the model is not overfitting
+# as the training and testing log loss are almost equal.
+
+# %%[markdown]
+
+# Step 3 : Grid Search for Optimal Alpha using best parameters from previous log loss
+# Calculate cost complexity pruning path
+ccp_path = clf.cost_complexity_pruning_path(X_train, y_train)
+
+# Perform grid search for the optimal alpha
+grid = GridSearchCV(
+    DTC(criterion='entropy', random_state=0, max_depth=best_params_log_loss_diff['params'][0], 
+        min_samples_split=best_params_log_loss_diff['params'][1], min_samples_leaf=best_params_log_loss_diff['params'][2]),  
+    {'ccp_alpha': ccp_path.ccp_alphas},        
+    refit=True, 
+    cv=kfold, 
+    scoring='accuracy'
+)
+grid.fit(X_train, y_train)
+
+# Get the best estimator and evaluate it
+best_clf = grid.best_estimator_
+best_clf
+# %%[markdown]
+
+# Evaluate the model using optimal alpha by finding accuracy through k-fold cross validation
+accuracies = []
+for train_index, test_index in kfold.split(X_train):
+    X_fold_train, X_fold_test = X_train.iloc[train_index], X_train.iloc[test_index]
+    y_fold_train, y_fold_test = y_train.iloc[train_index], y_train.iloc[test_index]
+    
+    best_clf.fit(X_fold_train, y_fold_train)
+    accuracy = accuracy_score(y_fold_test, best_clf.predict(X_fold_test))
+    accuracies.append(accuracy)
+
+mean_accuracy = np.mean(accuracies)
+
+# Print accuracies and mean accuracy
+print(f'Accuracies from each fold: {accuracies}')
+print(f'Mean Accuracy: {mean_accuracy}')
+
+# Calculate ROC AUC for the best estimator
+best_y_proba = best_clf.predict_proba(X_test)[:, 1]
+best_roc_auc = roc_auc_score(y_test, best_y_proba)
+print(f'Best Estimator ROC AUC Score: {best_roc_auc}')
+
+
+# Visualize the best estimator
+plt.figure(figsize=(12, 12))
+plot_tree(best_clf, feature_names=features.columns, filled=True, class_names=True)
+plt.show()
+
+# %%[markdown]
+# Step 4 :  Generating Confusion matrix and ROC plot
+# Generate confusion matrix for best estimator
+
+best_confusion = confusion_matrix(y_test, best_clf.predict(X_test))
+print("Best Estimator Confusion Matrix:")
+print(best_confusion)
+
+
+
+# Calculate ROC AUC for the best estimator
+best_y_proba = best_clf.predict_proba(X_test)[:, 1]
+best_roc_auc = roc_auc_score(y_test, best_y_proba)
+print(f'Best Estimator ROC AUC Score: {best_roc_auc}')
+
+#%%
+# Calculate FPR and TPR for ROC curve
+fpr, tpr, _ = roc_curve(y_test, best_y_proba)
+
+# Plotting ROC AUC
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {best_roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], 'k--')  # Diagonal line for random guessing
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.legend()
+plt.grid()
+plt.show()
+# %%[markdown]
+
+# Extract feature importances from the best estimator
+feature_importances = best_clf.feature_importances_
+
+# Create a DataFrame to hold the feature names and their importance
+importance_df = pd.DataFrame({
+    'Feature': features.columns,
+    'Importance': feature_importances
+})
+
+# Sort the DataFrame by importance
+importance_df = importance_df.sort_values(by='Importance', ascending=False)
+
+# Display the feature importances
+print(importance_df)
+
+# Plotting feature importances
+plt.figure(figsize=(10, 6))
+plt.barh(importance_df['Feature'], importance_df['Importance'], color='skyblue')
+plt.xlabel('Importance')
+plt.title('Feature Importances from Decision Tree Classifier')
+plt.gca().invert_yaxis()  # Invert y-axis to show the most important feature at the top
+plt.grid()
+plt.show()
+
+
+
+
+#%% KNN on Whole data set
+
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+
+# Assuming 'Growing_Stress' is our target variable
+X = encoded_final_df.drop('Growing_Stress', axis=1)
+y = encoded_final_df['Growing_Stress']
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize and train the KNN model
+knn = KNeighborsClassifier(n_neighbors=20)  # You can adjust the number of neighbors
+knn.fit(X_train, y_train)
+
+# Make predictions
+y_pred = knn.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy}")
+
+# Print detailed classification report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+
+# %%
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {
+    'n_neighbors': [3, 5, 7, 9, 11],
+    'weights': ['uniform', 'distance'],
+    'metric': ['euclidean', 'manhattan']
+}
+
+grid_search = GridSearchCV(KNeighborsClassifier(), param_grid, cv=5)
+grid_search.fit(X_train, y_train)
+
+best_knn = grid_search.best_estimator_
+
+# %%
+from sklearn.model_selection import cross_val_score
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+
+cv_scores = cross_val_score(best_knn, X, y, cv=5)
+print(f"Cross-validation scores: {cv_scores}")
+print(f"Mean CV score: {cv_scores.mean():.4f}")
+
+
+# %%
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+
+# Initialize and train the KNN model
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+# Make predictions
+y_pred = knn.predict(X_test)
+y_pred_proba = knn.predict_proba(X_test)[:, 1]
+
+# Calculate performance metrics
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+roc_auc = roc_auc_score(y_test, y_pred_proba)
+
+# Cross-validation score
+cv_scores = cross_val_score(knn, X, y, cv=5)
+
+print(f"Accuracy: {accuracy:.4f}")
+print(f"ROC AUC Score: {roc_auc:.4f}")
+print(f"Cross-validation scores: {cv_scores}")
+print(f"Mean CV score: {cv_scores.mean():.4f}")
+
+print("\nConfusion Matrix:")
+print(conf_matrix)
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+
+# %%  Abirham
+# Do people with Mental health history receive treatment or not?
+# how well "Mental Health History" predicts whether a person will seek treatment
+
+# %%
+import pandas as pd
+from scipy.stats import chi2_contingency
+
+# Let's first examine the unique values for 'Mental_Health_History' and 'Treatment'
+print(encoded_final_df['Mental_Health_History'].unique())
+print(encoded_final_df['treatment'].unique())
+
+# Performing a Chi-Square Test for Independence to check if there's a relationship between the two variables
+crosstab = pd.crosstab(encoded_final_df['Mental_Health_History'], encoded_final_df['treatment'])
+stat, p, dof, expected = chi2_contingency(crosstab)
+
+print(f"Chi-Square Test: p-value = {p}")
+if p < 0.05:
+    print("There is a significant association between Mental Health History and Treatment.")
+else:
+    print("There is no significant association between Mental Health History and Treatment.")
+
+# %%
+# the small p  value indicates that there is a strong association between mental_health_history and treatment
+# %%
+# visualizations to better understand the relationship between "Mental Health History" and "Treatment".
+import pandas as pd
+import matplotlib.pyplot as plt
+import mplcursors
+
+# Group data for the plot
+grouped_data = encoded_final_df.groupby(['Mental_Health_History', 'treatment']).size().unstack()
+
+# Create a stacked bar chart
+ax = grouped_data.plot(kind='bar', stacked=True, figsize=(10, 6), colormap='Set2')
+plt.title('Mental Health History vs Treatment')
+plt.xlabel('Mental Health History')
+plt.ylabel('Count')
+plt.legend(title='Treatment')
+
+# Add interactivity
+mplcursors.cursor(ax, hover=True)
+
+# Show the plot
+plt.tight_layout()
+plt.show()
+
+
+# %% modelling
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+
+# Features and target
+X = encoded_final_df[['Mental_Health_History']]  # Using only 'Mental_Health_History' for prediction
+y = encoded_final_df['treatment']
+
+# Splitting data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize and train the logistic regression model
+logreg = LogisticRegression()
+logreg.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = logreg.predict(X_test)
+
+# Evaluate the model
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
+
+print("Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+# Accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy of the Logistic Regression Model: {accuracy:.2f}")
+
+# %% Feature importance
+# Getting the coefficient for 'Mental_Health_History' from the logistic regression model
+coeff = logreg.coef_[0][0]
+print(f"Coefficient for Mental Health History: {coeff:.4f}")
+if coeff > 0:
+    print("A positive coefficient means that having a mental health history increases the likelihood of seeking treatment.")
+else:
+    print("A negative coefficient means that having a mental health history decreases the likelihood of seeking treatment.")
+
+
+# %%
+# we got a positive coeficient and  it means having a mental health history  increases the likely hood of getting treatment
+# %%
+from sklearn.metrics import roc_auc_score, roc_curve
+
+# AUC-ROC
+roc_auc = roc_auc_score(y_test, logreg.predict_proba(X_test)[:, 1])
+print(f"AUC-ROC: {roc_auc:.2f}")
+
+# ROC Curve
+fpr, tpr, thresholds = roc_curve(y_test, logreg.predict_proba(X_test)[:, 1])
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, color='darkorange', label=f'ROC curve (area = {roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], color='navy', linestyle='--')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.legend(loc='lower right')
+plt.show()
+
+# %%
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+
+# Initialize and train the KNN model
+knn = KNeighborsClassifier(n_neighbors=5)  # Start with 5 neighbors
+knn.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred_knn = knn.predict(X_test)
+y_pred_proba_knn = knn.predict_proba(X_test)[:, 1]
+
+# Evaluate KNN
+print("KNN Classification Report:")
+print(classification_report(y_test, y_pred_knn))
+
+print("KNN Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred_knn))
+
+# AUC-ROC
+roc_auc_knn = roc_auc_score(y_test, y_pred_proba_knn)
+print(f"KNN AUC-ROC: {roc_auc_knn:.2f}")
+
+# %%
+from scipy.stats import chi2_contingency
+
+# Contingency table
+contingency_table = pd.crosstab(encoded_final_df['family_history'], encoded_final_df['treatment'])
+
+# Perform Chi-Square Test
+chi2_stat, p_value, dof, expected = chi2_contingency(contingency_table)
+
+print(f"Chi-Square Test Results:")
+print(f"Chi-Square Statistic: {chi2_stat:.2f}")
+print(f"P-value: {p_value:.4f}")
+if p_value < 0.05:
+    print("Family History is significantly associated with Treatment.")
+else:
+    print("Family History is NOT significantly associated with Treatment.")
+
+
+# %%
+# EDA between Family History and Treatment
+plt.figure(figsize=(8, 6))
+sns.countplot(x='family_history', hue='treatment', data=encoded_final_df, palette='Set2')
+plt.title('Family History vs Treatment')
+plt.xlabel('Family History')
+plt.ylabel('Count')
+plt.legend(title='Treatment', loc='upper right')
+plt.show()
+
+# EDA between Mental Health History, Family History, and Treatment
+plt.figure(figsize=(10, 8))
+sns.heatmap(encoded_final_df.groupby(['Mental_Health_History', 'family_history'])['treatment']
+            .mean().unstack(), annot=True, fmt='.2f', cmap='coolwarm', cbar_kws={'label': 'Treatment Rate'})
+plt.title('Mental Health History and Family History vs Treatment Rate')
+plt.xlabel('Family History')
+plt.ylabel('Mental Health History')
+plt.show()
+
+# %%[markdown]
+# Without Family History (family_history=0):
+# A larger proportion of people do not seek treatment (green bar) compared to those who do (orange bar).
+# This suggests that individuals without a family history of mental health issues are less likely to seek treatment overall.
+# With Family History (family_history=1):
+# A significantly larger proportion of people with a family history of mental health issues seek treatment (orange bar) compared to those who do not (green bar).
+# This suggests that having a family history of mental health issues is positively associated with seeking treatment.
+# %%  KNN model for family Histor  mental Health History and treatment
+
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    roc_curve,
+    confusion_matrix,
+    classification_report
+)
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+
+# Define features and target
+X = encoded_final_df[['Mental_Health_History', 'family_history']]  # Two variables
+y = encoded_final_df['treatment']  # Target
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+# Initialize and train the KNN model
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+# Predictions
+y_pred = knn.predict(X_test)
+y_pred_proba = knn.predict_proba(X_test)[:, 1]
+
+# Metrics
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+auc_roc = roc_auc_score(y_test, y_pred_proba)
+
+print("Performance Metrics for KNN:")
+print(f"Accuracy: {accuracy:.2f}")
+print(f"Precision: {precision:.2f}")
+print(f"Recall: {recall:.2f}")
+print(f"F1-Score: {f1:.2f}")
+print(f"AUC-ROC: {auc_roc:.2f}")
+
+# Confusion Matrix
+conf_matrix = confusion_matrix(y_test, y_pred)
+print("\nConfusion Matrix:")
+print(conf_matrix)
+
+# Confusion Matrix Visualization
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
+            xticklabels=['No Treatment', 'Treatment'], 
+            yticklabels=['No Treatment', 'Treatment'])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.show()
+
+# ROC Curve
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
+plt.figure(figsize=(10, 8))
+plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {auc_roc:.2f})', color='darkorange', linewidth=2)
+plt.plot([0, 1], [0, 1], color='navy', linestyle='--', linewidth=1.5)
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.legend(loc='lower right')
+plt.grid(alpha=0.4)
+plt.show()
+
+# Classification Report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Bar Chart of Performance Metrics
+metrics = {'Accuracy': accuracy, 'Precision': precision, 'Recall': recall, 'F1-Score': f1, 'AUC-ROC': auc_roc}
+plt.figure(figsize=(10, 6))
+plt.bar(metrics.keys(), metrics.values(), color=['skyblue', 'orange', 'green', 'purple', 'red'])
+plt.ylim(0, 1)
+plt.title('Performance Metrics')
+plt.ylabel('Score')
+plt.xlabel('Metric')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
+
+
+
+# %%
+
+
+
+# %% 
+
+# %%
+from sklearn.model_selection import GridSearchCV
+
+# Define parameter grid
+param_grid = {
+    'n_neighbors': [3, 5, 7, 9],
+    'weights': ['uniform', 'distance'],
+    'metric': ['euclidean', 'manhattan']
+}
+
+# Perform Grid Search
+grid_knn = GridSearchCV(KNeighborsClassifier(), param_grid, cv=5, scoring='roc_auc')
+grid_knn.fit(X_train, y_train)
+
+# Best model
+best_knn = grid_knn.best_estimator_
+print(f"Best parameters: {grid_knn.best_params_}")
+
+# Evaluate best KNN
+y_pred_best = best_knn.predict(X_test)
+y_pred_proba_best = best_knn.predict_proba(X_test)[:, 1]
+print(f"Optimized KNN AUC-ROC: {roc_auc_score(y_test, y_pred_proba_best):.2f}")
+
+
+# %%
 
 
 # %% KNN
@@ -1236,92 +1839,146 @@ print(classification_report(y_test, y_pred))
 
 #%%[markdown]
 # EDA specifically for the Student occupation
+
+# Data preparation
 # Filter data for 'Student' occupation
-student_data = health_data[health_data['Occupation'] == 'Student']
+health_data_student = health_data_backup[health_data_backup['Occupation'] == 'Student']
+
+# Drop unnecessary columns same as previous
+health_data_student = health_data_student.drop(columns=['Country'])
 
 # Check the first few rows of the filtered data
-student_data.head()
+health_data_student.head()
 
-#%%[markdown]
-# Distribution of Days_Indoors for Students
-# Plot distribution of 'Days_Indoors' for students
-sns.histplot(student_data['Days_Indoors'], kde=True, color='skyblue')
-plt.title('Distribution of Days Indoors for Students')
-plt.xlabel('Days Indoors')
-plt.ylabel('Frequency')
-plt.show()
-
-#%%[markdown]
-# Treatment vs Growing Stress for students
-sns.countplot(x='Growing_Stress', hue='treatment', data=student_data, palette='Set2')
-plt.title('Treatment vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Count')
-plt.show()
-
-#%%[markdown]
-# Changes in Habits vs Growing Stress for students
-sns.countplot(x='Growing_Stress', hue='Changes_Habits', data=student_data, palette='Set2')
-plt.title('Changes in Habits vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Count')
-
-# Move the legend (hue label) to the top-left
-plt.legend(title='Changes in Habits', loc='upper left', bbox_to_anchor=(0, 1))
-plt.show()
+# Check student data info
+health_data_student.info()
 
 
 #%%[markdown]
-# Coping Struggles vs Growing Stress for students
-sns.countplot(x='Growing_Stress', hue='Coping_Struggles', data=student_data, palette='Set2')
-plt.title('Coping Struggles vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Count')
-plt.show()
+# EDA for student start here
+
+# Initialize a list to hold figures_st
+figures_st = []
+
+# Loop through each feature in student_data
+for feature in health_data_student.columns:
+    if feature not in ['Growing_Stress', 'Occupation']:  # Skip the Growing_Stress, Occupation column
+        # Calculate counts of Growing Stress for each category
+        counts = health_data_student.groupby([feature, 'Growing_Stress']).size().unstack(fill_value=0)
+        
+        # Calculate percentages
+        percentages = counts.div(counts.sum(axis=1), axis=0) * 100
+        
+        # Create a stacked bar chart
+        fig = go.Figure()
+        
+        # Add traces for each Growing Stress value
+        for stress_value in percentages.columns:
+            fig.add_trace(go.Bar(
+                x=percentages.index.map(lambda x: label_mappings[feature].get(x, x) if feature in label_mappings else x),  # Apply label mapping only if feature is in label_mappings
+                y=percentages[stress_value],
+                name=f'Growing Stress: {("No" if stress_value == 0 else "Yes")}',  # Change legend labels
+                marker_color=color_palette[stress_value],
+                text=[f"{val:.1f}%" for val in percentages[stress_value]],  # Percentage text
+                textposition='inside'  # Center the text inside the bars
+            ))
+        
+        # Update layout for each figure
+        fig.update_layout(
+            title=f'Growing Stress Distribution by {feature}',
+            xaxis_title=feature,
+            yaxis_title='Percentage',
+            barmode='stack',
+            legend_title='Growing Stress',
+            template='plotly_white',
+            height=400,  # Adjust height for better visualization
+            margin=dict(l=40, r=40, t=40, b=40)
+        )
+        
+        # Add grid lines for better readability
+        fig.update_xaxes(showgrid=True, gridcolor='lightgray')
+        fig.update_yaxes(showgrid=True, gridcolor='lightgray')
+        
+        # Append the figure to the list
+        figures_st.append(fig)
+
+# Show all figures
+for fig in figures_st:
+    fig.show()
 
 #%%[markdown]
-# Social Weakness vs Growing Stress for students
-sns.countplot(x='Growing_Stress', hue='Social_Weakness', data=student_data, palette='Set2')
-plt.title('Social Weakness vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Count')
-plt.show()
+# Insights from ditributions
+#
+# Growing Stress vs Timestamp: 
+# The distribution differences across the years 2014, 2015, and 2016 are not significant. In all three years, the proportion of respondents answering "Yes" is higher.
+#
+# Growing Stress vs Gender:
+# Within the same gender, for male, the proportion of those who answered "Yes" to growing stress is higher than that of female.
+#
+# Growing Stress vs Self-employed/Family history/treatment :
+# The proportion looks similar between No and Yes groups.
 
-#%%[markdown]
-# Mood Swings vs Growing Stress for students
-sns.countplot(x='Growing_Stress', hue='Mood_Swings', data=student_data, palette='Set2')
-plt.title('Mood Swings vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Count')
-plt.show()
+# Growing Stress vs Days_Indoors: 
+# Students who spend more than 30 days away from home are more likely to experience growing stress.
 
-#%%[markdown]
-# Gender vs Growing Stress for students
-sns.countplot(x='Growing_Stress', hue='Gender', data=student_data, palette='Set2')
-plt.title('Gender vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Count')
-plt.show()
+# Growing Stress vs Changes Habits
 
-#%%[markdown]
-# Days Indoors vs Growing Stress for students
-sns.boxplot(x='Growing_Stress', y='Days_Indoors', data=student_data, palette='Set2')
-plt.title('Days Indoors vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Days Indoors')
-plt.show()
+# Growing Stress vs Mental Health History
+
+# Growing Stress vs Mood Swings
+
+# Growing Stress vs Coping Struggles
+
+# Growing Stress vs Work Interest
+
+# Growing Stress vs Social Weakness
+
+# Growing Stress vs Mental Health Interview
+
+# Growing Stress vs Care options
 
 #%%[markdown]
 # Correlation heatmap for variables correlated with Growing Stress for students
-student_corr = student_data[['Days_Indoors', 'Growing_Stress', 'Changes_Habits', 'Coping_Struggles', 
+student_corr = health_data_student[['Days_Indoors', 'Growing_Stress', 'Changes_Habits', 'Coping_Struggles', 
                              'Mood_Swings', 'Social_Weakness', 'treatment']].corr()
 plt.figure(figsize=(8, 6))
 sns.heatmap(student_corr, annot=True, cmap='coolwarm', fmt='.2f', linewidths=0.5)
 plt.title('Correlation Heatmap for Growing Stress and Related Variables for Students')
 plt.show()
 
+#%%[markdown]
+# Statistical tests for student
+from scipy.stats import chi2_contingency, chi2
 
-# %%
+cols= ['Timestamp','Gender','self_employed','family_history', 'treatment', 'Days_Indoors',
+                    'Changes_Habits', 'Mental_Health_History', 'Mood_Swings','Coping_Struggles', 'Work_Interest', 'Social_Weakness','mental_health_interview','care_options']
+def calculate_chi_square(column1,column2 = 'Growing_Stress'):
+    print(f"Correlation between **{column1}** and **{column2}**\n")
+    crosstab = pd.crosstab(health_data_student[column1],health_data_student[column2])
+    stat,p,dof,expected = chi2_contingency(crosstab, correction = True)
+    print(f'P_value = {p}, degrees of freedom =  {dof}')
+    prob = 0.95
+    critical = chi2.ppf(prob,dof)
+    print(f'probability = %.3f, critical = %.3f, stat = %.3f' %(prob,critical,stat) )
+    if stat >= critical:
+        print('dependent(reject(Ho))')
+    else:
+        print('independent(accept(Ho))')
+    alpha = 1.0 - prob
+    print(f'significance = %.3f, p-value = %.3f' %(alpha,p))
+    if p <= alpha:
+        print('dependent(reject(Ho))')
+    else:
+        print('independent(accept(Ho))')
+    print('\n-----------------------------------\n')
+print('** Chi_square Correlation between Dichotomous features with Target:Growing stress**\n')
+for col in cols:
+    calculate_chi_square(col)
+
+#%%[markdown]
+# Modeling For Student - yonathan
+
+# %% What is this for? ####################################
 # Gender, occupation, family_history,treatment, Days_indoors, changes_habits, mental_health_history,
 # mood_swings, coping_struggles, work_interest, social weakness, mental_health_interview, care_options
 # have a significant p-value suggesting that the growing stress levels for these groups is different for
@@ -1338,12 +1995,12 @@ plt.show()
 health_data_copy = health_data.copy()
 
 # Filter data to only include students
-health_data_students = health_data_copy[health_data_copy['Occupation'] == 'Student']
+health_data_student = health_data_copy[health_data_copy['Occupation'] == 'Student']
 
 # Preprocessing the dataset
 # Drop 'Timestamp' and other irrelevant columns for prediction
-X = health_data_students.drop(['Growing_Stress', 'Timestamp', 'Country', 'Occupation'], axis=1)  # Drop target and irrelevant columns
-y = health_data_students['Growing_Stress']  # Target column
+X = health_data_student.drop(['Growing_Stress', 'Timestamp', 'Country', 'Occupation'], axis=1)  # Drop target and irrelevant columns
+y = health_data_student['Growing_Stress']  # Target column
 
 # Convert categorical columns to numeric (if any)
 X = pd.get_dummies(X, drop_first=True)  # One-hot encoding for categorical features
