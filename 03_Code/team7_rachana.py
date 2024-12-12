@@ -2595,7 +2595,7 @@ Xtrain_scaled = scaler.fit_transform(Xtrain)
 Xtest_scaled = scaler.transform(Xtest)
 
 from sklearn.svm import SVC
-svm_model = SVC(kernel='linear', C=1.0, probability=True)
+svm_model = SVC(kernel='rbf', C=1.0, probability=True)
 svm_model.fit(Xtrain_scaled, Ytrain)
 
 
@@ -2631,7 +2631,7 @@ plt.title("ROC Curve")
 plt.legend()
 plt.show()
 
-#Model has an accuracy of 0.68 and an AUC of 0.71. Let's try to see what parameters we can optimize to improve predictive power.
+#Model has an accuracy of 0.75 and an AUC of 0.83. Let's try to see what parameters we can optimize to improve predictive power.
 
 from sklearn.model_selection import GridSearchCV
 param_grid = {
