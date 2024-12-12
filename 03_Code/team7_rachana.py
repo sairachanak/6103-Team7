@@ -1195,37 +1195,7 @@ print(classification_report(y_test, y_pred))
 #%%mental health treatment and family history
 
 
-# %%
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
-from sklearn.preprocessing import StandardScaler
 
-# Assuming 'Growing_Stress' is our target variable
-X = encoded_final_df.drop('Growing_Stress', axis=1)
-y = encoded_final_df['Growing_Stress']
-
-# Split the data
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# Scale the features
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-# Initialize and train the KNN model
-knn = KNeighborsClassifier(n_neighbors=5)
-knn.fit(X_train_scaled, y_train)
-
-# Make predictions
-y_pred = knn.predict(X_test_scaled)
-
-# Evaluate the model
-accuracy = accuracy_score(y_test, y_pred)
-print(f"KNN Accuracy: {accuracy:.4f}")
-
-print("\nClassification Report:")
-print(classification_report(y_test, y_pred))
 
 
 
