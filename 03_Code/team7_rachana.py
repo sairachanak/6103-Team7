@@ -2145,6 +2145,96 @@ for col in cols:
 #%%[markdown]
 # Modeling For Student - yonathan
 
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, roc_curve, confusion_matrix
+
+
+#Make a copy of the data
+health_data_yon = health_data.copy()
+
+
+#Break student apart from the other occupations
+health_data_student_yon = health_data_yon[health_data_yon['Occupation'] == 'Student'].drop(['Timestamp', 'Country', 'Occupation',], axis = 1)
+health_data_student_yon = health_data_student_yon[health_data_student_yon['Growing_Stress'] != 2]
+health_data_student_yon.head()
+#With the value 2 taken out for growing stress and the data filtered for only students, we have 37772 observations.
+
+
+#Features and target
+X = health_data_student_yon.drop('Growing_Stress', axis = 1)
+y = health_data_student_yon ['Growing_Stress']
+
+
+#Training and Test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42)
+
+
+#Scaling work
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+
+log_reg = LogisticRegression(random_state=42, max_iter=1000)
+log_reg.fit(X_train_scaled, y_train)
+
+
+# Predictions
+y_pred = log_reg.predict(X_test_scaled)
+y_pred_prob = log_reg.predict_proba(X_test_scaled)[:, 1]
+
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+auc = roc_auc_score(y_test, y_pred_prob)
+
+
+print(f"Accuracy: {accuracy}")
+print(f"ROC-AUC: {auc:.2f}")
+
+
+# ROC Curve
+fpr, tpr, _ = roc_curve(y_test, y_pred_prob)
+plt.plot(fpr, tpr, label=f"Logistic Regression (AUC = {auc:.2f})")
+plt.plot([0, 1], [0, 1], 'k--', label="Random Chance")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("ROC Curve")
+plt.legend()
+plt.show()
+
+
+# Confusion Matrix
+conf_matrix = confusion_matrix(y_test, y_pred)
+sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues")
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+
+from sklearn.model_selection import cross_val_score
+cross_val_score(log_reg, X_train_scaled, y_train, cv=5)
+#Initial AUC of 0.62 and accuracy of 0.61. We aren't satisfied so we have to try to do feature engineering.
+
+
+# Evaluate feature importance
+coefficients = pd.DataFrame({
+    'Feature': X.columns,
+    'Coefficient': log_reg.coef_[0]
+}).sort_values(by='Coefficient', ascending=False)
+
+
+print(coefficients)
+#Given the model we just built, the strongest coefficients seem to be Days_Indoors, Mood_Swings, and social_weakness,
+#Let's try to remove some of the unimportant variables to test if model accuracy will improve
+
+
+
+
 # %% What is this for? ####################################
 # Gender, occupation, family_history,treatment, Days_indoors, changes_habits, mental_health_history,
 # mood_swings, coping_struggles, work_interest, social weakness, mental_health_interview, care_options
