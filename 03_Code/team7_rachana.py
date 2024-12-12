@@ -868,6 +868,53 @@ for fig in treatment_relation_figures:
 #%%[markdown]
 # Statistical Testing for Treatment
 
+# List of columns to consider for the chi-square test
+cols = ['Timestamp', 'Gender', 'Country', 'Occupation', 'self_employed', 'family_history', 
+        'treatment', 'Days_Indoors', 'Changes_Habits', 'Mental_Health_History', 'Mood_Swings',
+        'Coping_Struggles', 'Work_Interest', 'Social_Weakness', 'mental_health_interview', 'care_options']
+
+# Function to calculate Chi-Square Test of Independence
+def calculate_chi_square(column1, column2='treatment'):
+    print(f"Correlation between **{column1}** and **{column2}**\n")
+    # Generate the crosstab for the two columns
+    crosstab = pd.crosstab(health_data[column1], health_data[column2])
+    
+    # Perform the Chi-Square test
+    stat, p, dof, expected = chi2_contingency(crosstab, correction=True)
+    
+    print(f'P-value = {p}, Degrees of freedom = {dof}')
+    
+    # Critical value for 95% confidence
+    prob = 0.95
+    critical = chi2.ppf(prob, dof)
+    print(f'Probability = %.3f, Critical value = %.3f, Test statistic = %.3f' % (prob, critical, stat))
+    
+    # Hypothesis test decision
+    if stat >= critical:
+        print('Dependent (reject H0)')
+    else:
+        print('Independent (accept H0)')
+    
+    # Significance testing
+    alpha = 1.0 - prob
+    print(f'Significance level = %.3f, p-value = %.3f' % (alpha, p))
+    
+    if p <= alpha:
+        print('Dependent (reject H0)')
+    else:
+        print('Independent (accept H0)')
+    
+    print('\n-----------------------------------\n')
+
+
+# Run Chi-Square tests for the correlation between the `treatment` and each feature
+print('** Chi-Square Correlation between Treatment and Other Features **\n')
+for col in cols:
+    # Skip the 'treatment' column itself as it will always be correlated with 'treatment'
+    if col != 'treatment':
+        calculate_chi_square(col)
+        
+
 #%%[markdown]
 # Copy dataset for trying different Smart question
 health_data_backup = health_data.copy()
