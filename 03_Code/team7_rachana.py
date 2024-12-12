@@ -1403,23 +1403,302 @@ print("\nClassification Report:")
 print(classification_report(y_test, y_pred))
 
 
+# %%  Abirham
+# Do people with Mental health history receive treatment or not?
+# how well "Mental Health History" predicts whether a person will seek treatment
+
+# %%
+import pandas as pd
+from scipy.stats import chi2_contingency
+
+# Let's first examine the unique values for 'Mental_Health_History' and 'Treatment'
+print(encoded_final_df['Mental_Health_History'].unique())
+print(encoded_final_df['treatment'].unique())
+
+# Performing a Chi-Square Test for Independence to check if there's a relationship between the two variables
+crosstab = pd.crosstab(encoded_final_df['Mental_Health_History'], encoded_final_df['treatment'])
+stat, p, dof, expected = chi2_contingency(crosstab)
+
+print(f"Chi-Square Test: p-value = {p}")
+if p < 0.05:
+    print("There is a significant association between Mental Health History and Treatment.")
+else:
+    print("There is no significant association between Mental Health History and Treatment.")
+
+# %%
+# the small p  value indicates that there is a strong association between mental_health_history and treatment
+# %%
+# visualizations to better understand the relationship between "Mental Health History" and "Treatment".
+import pandas as pd
+import matplotlib.pyplot as plt
+import mplcursors
+
+# Group data for the plot
+grouped_data = encoded_final_df.groupby(['Mental_Health_History', 'treatment']).size().unstack()
+
+# Create a stacked bar chart
+ax = grouped_data.plot(kind='bar', stacked=True, figsize=(10, 6), colormap='Set2')
+plt.title('Mental Health History vs Treatment')
+plt.xlabel('Mental Health History')
+plt.ylabel('Count')
+plt.legend(title='Treatment')
+
+# Add interactivity
+mplcursors.cursor(ax, hover=True)
+
+# Show the plot
+plt.tight_layout()
+plt.show()
+
+
+# %% modelling
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+
+# Features and target
+X = encoded_final_df[['Mental_Health_History']]  # Using only 'Mental_Health_History' for prediction
+y = encoded_final_df['treatment']
+
+# Splitting data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize and train the logistic regression model
+logreg = LogisticRegression()
+logreg.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = logreg.predict(X_test)
+
+# Evaluate the model
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
+
+print("Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+# Accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy of the Logistic Regression Model: {accuracy:.2f}")
+
+# %% Feature importance
+# Getting the coefficient for 'Mental_Health_History' from the logistic regression model
+coeff = logreg.coef_[0][0]
+print(f"Coefficient for Mental Health History: {coeff:.4f}")
+if coeff > 0:
+    print("A positive coefficient means that having a mental health history increases the likelihood of seeking treatment.")
+else:
+    print("A negative coefficient means that having a mental health history decreases the likelihood of seeking treatment.")
+
+
+# %%
+# we got a positive coeficient and  it means having a mental health history  increases the likely hood of getting treatment
+# %%
+from sklearn.metrics import roc_auc_score, roc_curve
+
+# AUC-ROC
+roc_auc = roc_auc_score(y_test, logreg.predict_proba(X_test)[:, 1])
+print(f"AUC-ROC: {roc_auc:.2f}")
+
+# ROC Curve
+fpr, tpr, thresholds = roc_curve(y_test, logreg.predict_proba(X_test)[:, 1])
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, color='darkorange', label=f'ROC curve (area = {roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], color='navy', linestyle='--')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.legend(loc='lower right')
+plt.show()
+
+# %%
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+
+# Initialize and train the KNN model
+knn = KNeighborsClassifier(n_neighbors=5)  # Start with 5 neighbors
+knn.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred_knn = knn.predict(X_test)
+y_pred_proba_knn = knn.predict_proba(X_test)[:, 1]
+
+# Evaluate KNN
+print("KNN Classification Report:")
+print(classification_report(y_test, y_pred_knn))
+
+print("KNN Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred_knn))
+
+# AUC-ROC
+roc_auc_knn = roc_auc_score(y_test, y_pred_proba_knn)
+print(f"KNN AUC-ROC: {roc_auc_knn:.2f}")
+
+# %%
+from scipy.stats import chi2_contingency
+
+# Contingency table
+contingency_table = pd.crosstab(encoded_final_df['family_history'], encoded_final_df['treatment'])
+
+# Perform Chi-Square Test
+chi2_stat, p_value, dof, expected = chi2_contingency(contingency_table)
+
+print(f"Chi-Square Test Results:")
+print(f"Chi-Square Statistic: {chi2_stat:.2f}")
+print(f"P-value: {p_value:.4f}")
+if p_value < 0.05:
+    print("Family History is significantly associated with Treatment.")
+else:
+    print("Family History is NOT significantly associated with Treatment.")
+
+
+# %%
+# EDA between Family History and Treatment
+plt.figure(figsize=(8, 6))
+sns.countplot(x='family_history', hue='treatment', data=encoded_final_df, palette='Set2')
+plt.title('Family History vs Treatment')
+plt.xlabel('Family History')
+plt.ylabel('Count')
+plt.legend(title='Treatment', loc='upper right')
+plt.show()
+
+# EDA between Mental Health History, Family History, and Treatment
+plt.figure(figsize=(10, 8))
+sns.heatmap(encoded_final_df.groupby(['Mental_Health_History', 'family_history'])['treatment']
+            .mean().unstack(), annot=True, fmt='.2f', cmap='coolwarm', cbar_kws={'label': 'Treatment Rate'})
+plt.title('Mental Health History and Family History vs Treatment Rate')
+plt.xlabel('Family History')
+plt.ylabel('Mental Health History')
+plt.show()
+
+# %%[markdown]
+# Without Family History (family_history=0):
+# A larger proportion of people do not seek treatment (green bar) compared to those who do (orange bar).
+# This suggests that individuals without a family history of mental health issues are less likely to seek treatment overall.
+# With Family History (family_history=1):
+# A significantly larger proportion of people with a family history of mental health issues seek treatment (orange bar) compared to those who do not (green bar).
+# This suggests that having a family history of mental health issues is positively associated with seeking treatment.
+# %%  KNN model for family Histor  mental Health History and treatment
+
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    roc_curve,
+    confusion_matrix,
+    classification_report
+)
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+
+# Define features and target
+X = encoded_final_df[['Mental_Health_History', 'family_history']]  # Two variables
+y = encoded_final_df['treatment']  # Target
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+# Initialize and train the KNN model
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+# Predictions
+y_pred = knn.predict(X_test)
+y_pred_proba = knn.predict_proba(X_test)[:, 1]
+
+# Metrics
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+auc_roc = roc_auc_score(y_test, y_pred_proba)
+
+print("Performance Metrics for KNN:")
+print(f"Accuracy: {accuracy:.2f}")
+print(f"Precision: {precision:.2f}")
+print(f"Recall: {recall:.2f}")
+print(f"F1-Score: {f1:.2f}")
+print(f"AUC-ROC: {auc_roc:.2f}")
+
+# Confusion Matrix
+conf_matrix = confusion_matrix(y_test, y_pred)
+print("\nConfusion Matrix:")
+print(conf_matrix)
+
+# Confusion Matrix Visualization
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
+            xticklabels=['No Treatment', 'Treatment'], 
+            yticklabels=['No Treatment', 'Treatment'])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.show()
+
+# ROC Curve
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
+plt.figure(figsize=(10, 8))
+plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {auc_roc:.2f})', color='darkorange', linewidth=2)
+plt.plot([0, 1], [0, 1], color='navy', linestyle='--', linewidth=1.5)
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.legend(loc='lower right')
+plt.grid(alpha=0.4)
+plt.show()
+
+# Classification Report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Bar Chart of Performance Metrics
+metrics = {'Accuracy': accuracy, 'Precision': precision, 'Recall': recall, 'F1-Score': f1, 'AUC-ROC': auc_roc}
+plt.figure(figsize=(10, 6))
+plt.bar(metrics.keys(), metrics.values(), color=['skyblue', 'orange', 'green', 'purple', 'red'])
+plt.ylim(0, 1)
+plt.title('Performance Metrics')
+plt.ylabel('Score')
+plt.xlabel('Metric')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
 
 
 
+# %%
 
 
 
+# %% 
+
+# %%
+from sklearn.model_selection import GridSearchCV
+
+# Define parameter grid
+param_grid = {
+    'n_neighbors': [3, 5, 7, 9],
+    'weights': ['uniform', 'distance'],
+    'metric': ['euclidean', 'manhattan']
+}
+
+# Perform Grid Search
+grid_knn = GridSearchCV(KNeighborsClassifier(), param_grid, cv=5, scoring='roc_auc')
+grid_knn.fit(X_train, y_train)
+
+# Best model
+best_knn = grid_knn.best_estimator_
+print(f"Best parameters: {grid_knn.best_params_}")
+
+# Evaluate best KNN
+y_pred_best = best_knn.predict(X_test)
+y_pred_proba_best = best_knn.predict_proba(X_test)[:, 1]
+print(f"Optimized KNN AUC-ROC: {roc_auc_score(y_test, y_pred_proba_best):.2f}")
 
 
-
-
-
-
-
-
-
-
-
+# %%
 
 
 
