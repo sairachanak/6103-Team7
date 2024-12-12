@@ -28,6 +28,7 @@ from scipy.stats import spearmanr
 
 # Validation libraries
 from sklearn import metrics
+from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_recall_curve
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, roc_auc_score, roc_curve
@@ -1057,7 +1058,8 @@ visualizer.show()
 
 
 # %%[markdown]
-# Desciion Tree
+# %%[markdown]
+# Desciion Tree Before Regularization
 
 target = encoded_final_df['Growing_Stress']
 
@@ -1065,7 +1067,7 @@ target = encoded_final_df['Growing_Stress']
 features = encoded_final_df.drop(['Growing_Stress'], axis=1)
 
 # Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.5, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=0)
 
 # Initialize the Decision Tree Classifier
 clf = DTC(criterion='entropy', random_state=0)
@@ -1085,7 +1087,7 @@ print(f'Residual Deviance: {resid_dev}')
 ax = subplots(figsize=(12, 12))[1]
 plot_tree(clf, feature_names=features.columns, ax=ax)
 
-#%%
+# %%[markdown]
 
 
 # Section 2: Cross-Validation and Pruning
@@ -1095,12 +1097,12 @@ from sklearn.model_selection import KFold
 ccp_path = clf.cost_complexity_pruning_path(X_train, y_train)
 
 # Initialize KFold for cross-validation
-kfold = KFold(n_splits=10, random_state=1, shuffle=True)
+kfold = KFold(n_splits=5, random_state=1, shuffle=True)
 
 
-#%%
+# %%[markdown]
 # Section 3: Grid Search for Optimal Alpha
-from sklearn.model_selection import GridSearchCV
+
 
 # Grid search for optimal alpha
 grid = GridSearchCV(clf, {'ccp_alpha': ccp_path.ccp_alphas}, refit=True, cv=kfold, scoring='accuracy')
@@ -1115,7 +1117,7 @@ ax = subplots(figsize=(12, 12))[1]
 plot_tree(best_clf, feature_names=features.columns, ax=ax)
 
 
-#%%
+# %%[markdown]
 
 # Section 4: Evaluating the Best Estimator
 # Evaluate the best estimator
@@ -1126,6 +1128,215 @@ print(f'Best Estimator Accuracy: {best_accuracy}')
 best_confusion = confusion_matrix(y_test, best_clf.predict(X_test))
 print("Best Estimator Confusion Matrix:")
 print(best_confusion)
+
+# %%[markdown]
+# Though this looks like a pretty good model, it sems to be overfitting,
+# better todo some regularisation by decreasing the depth of the tree
+
+# %%[markdown]
+# Descision Tree After Regularisation
+# Step 1 : Fix depth of the tree and min_samples_split and leaf
+
+# Define the target and features
+target = encoded_final_df['Growing_Stress']
+features = encoded_final_df.drop(['Growing_Stress'], axis=1)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=0)
+
+# While going through all the depth values, this seems to give the best model
+clf = DTC(criterion='entropy', 
+          max_depth=8,              
+          min_samples_split = 20,     
+          min_samples_leaf = 10,       
+          random_state=0)
+
+# %%[markdown]
+# Step 2 : Evaluation of the model using train and test logloss using 5-fold cross validation
+
+# Track log loss for training and testing
+train_log_losses = []
+test_log_losses = []
+max_log_loss_diff = float('-inf')  # Initialize to negative infinity
+best_params_log_loss_diff = {}
+
+# KFold for cross-validation
+kfold = KFold(n_splits=5, random_state=1, shuffle=True)
+
+# Perform K-Fold Cross-Validation to compute log loss
+for train_index, test_index in kfold.split(features):
+    X_fold_train, X_fold_test = features.iloc[train_index], features.iloc[test_index]
+    y_fold_train, y_fold_test = target.iloc[train_index], target.iloc[test_index]
+    
+    clf.fit(X_fold_train, y_fold_train)
+    
+    # Log loss for training data
+    train_pred_proba = clf.predict_proba(X_fold_train)
+    train_log_loss = log_loss(y_fold_train, train_pred_proba)
+    train_log_losses.append(train_log_loss)
+    
+    # Log loss for testing data
+    test_pred_proba = clf.predict_proba(X_fold_test)
+    test_log_loss = log_loss(y_fold_test, test_pred_proba)
+    test_log_losses.append(test_log_loss)
+
+    # Calculate the difference between training and testing log loss
+    log_loss_diff = train_log_loss - test_log_loss
+    if log_loss_diff > max_log_loss_diff:
+        max_log_loss_diff = log_loss_diff
+        best_params_log_loss_diff['train_log_loss'] = train_log_loss
+        best_params_log_loss_diff['test_log_loss'] = test_log_loss
+        best_params_log_loss_diff['params'] = (clf.max_depth, clf.min_samples_split, clf.min_samples_leaf)
+
+# Average log losses
+average_train_log_loss = np.mean(train_log_losses)
+average_test_log_loss = np.mean(test_log_losses)
+
+print(f'Average Training Log Loss: {average_train_log_loss}')
+print(f'Average Testing Log Loss: {average_test_log_loss}')
+print(f'Best Parameters for Max Log Loss Difference: {best_params_log_loss_diff}')
+
+# Plotting training and testing log loss
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, len(train_log_losses) + 1), train_log_losses, marker='o', label='Training Log Loss')
+plt.plot(range(1, len(test_log_losses) + 1), test_log_losses, marker='x', label='Testing Log Loss')
+plt.title('Log Loss Comparison: Training vs Testing')
+plt.xlabel('Fold Number')
+plt.ylabel('Log Loss')
+plt.legend()
+plt.grid()
+plt.show()
+
+# %%[markdown]
+# From this it could be observed that the model is not overfitting
+# as the training and testing log loss are almost equal.
+
+# %%[markdown]
+
+# Step 3 : Grid Search for Optimal Alpha using best parameters from previous log loss
+# Calculate cost complexity pruning path
+ccp_path = clf.cost_complexity_pruning_path(X_train, y_train)
+
+# Perform grid search for the optimal alpha
+grid = GridSearchCV(
+    DTC(criterion='entropy', random_state=0, max_depth=best_params_log_loss_diff['params'][0], 
+        min_samples_split=best_params_log_loss_diff['params'][1], min_samples_leaf=best_params_log_loss_diff['params'][2]),  
+    {'ccp_alpha': ccp_path.ccp_alphas},        
+    refit=True, 
+    cv=kfold, 
+    scoring='accuracy'
+)
+grid.fit(X_train, y_train)
+
+# Get the best estimator and evaluate it
+best_clf = grid.best_estimator_
+best_clf
+# %%[markdown]
+
+# Evaluate the model using optimal alpha by finding accuracy through k-fold cross validation
+accuracies = []
+for train_index, test_index in kfold.split(X_train):
+    X_fold_train, X_fold_test = X_train.iloc[train_index], X_train.iloc[test_index]
+    y_fold_train, y_fold_test = y_train.iloc[train_index], y_train.iloc[test_index]
+    
+    best_clf.fit(X_fold_train, y_fold_train)
+    accuracy = accuracy_score(y_fold_test, best_clf.predict(X_fold_test))
+    accuracies.append(accuracy)
+
+mean_accuracy = np.mean(accuracies)
+
+# Print accuracies and mean accuracy
+print(f'Accuracies from each fold: {accuracies}')
+print(f'Mean Accuracy: {mean_accuracy}')
+
+# Calculate ROC AUC for the best estimator
+best_y_proba = best_clf.predict_proba(X_test)[:, 1]
+best_roc_auc = roc_auc_score(y_test, best_y_proba)
+print(f'Best Estimator ROC AUC Score: {best_roc_auc}')
+
+
+# Visualize the best estimator
+plt.figure(figsize=(12, 12))
+plot_tree(best_clf, feature_names=features.columns, filled=True, class_names=True)
+plt.show()
+
+# %%[markdown]
+# Step 4 :  Generating Confusion matrix and ROC plot
+# Generate confusion matrix for best estimator
+
+best_confusion = confusion_matrix(y_test, best_clf.predict(X_test))
+print("Best Estimator Confusion Matrix:")
+print(best_confusion)
+
+
+
+# Calculate ROC AUC for the best estimator
+best_y_proba = best_clf.predict_proba(X_test)[:, 1]
+best_roc_auc = roc_auc_score(y_test, best_y_proba)
+print(f'Best Estimator ROC AUC Score: {best_roc_auc}')
+
+#%%
+# Calculate FPR and TPR for ROC curve
+fpr, tpr, _ = roc_curve(y_test, best_y_proba)
+
+# Plotting ROC AUC
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {best_roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], 'k--')  # Diagonal line for random guessing
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.legend()
+plt.grid()
+plt.show()
+# %%[markdown]
+
+# Extract feature importances from the best estimator
+feature_importances = best_clf.feature_importances_
+
+# Create a DataFrame to hold the feature names and their importance
+importance_df = pd.DataFrame({
+    'Feature': features.columns,
+    'Importance': feature_importances
+})
+
+# Sort the DataFrame by importance
+importance_df = importance_df.sort_values(by='Importance', ascending=False)
+
+# Display the feature importances
+print(importance_df)
+
+# Plotting feature importances
+plt.figure(figsize=(10, 6))
+plt.barh(importance_df['Feature'], importance_df['Importance'], color='skyblue')
+plt.xlabel('Importance')
+plt.title('Feature Importances from Decision Tree Classifier')
+plt.gca().invert_yaxis()  # Invert y-axis to show the most important feature at the top
+plt.grid()
+plt.show()
+
+
+
+
+#%%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
