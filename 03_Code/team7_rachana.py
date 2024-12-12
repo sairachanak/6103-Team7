@@ -1496,11 +1496,11 @@ plt.show()
 # Statistical tests for student
 from scipy.stats import chi2_contingency, chi2
 
-cols= ['Timestamp','Gender','Country','self_employed','family_history', 'treatment', 'Days_Indoors',
+cols= ['Timestamp','Gender','self_employed','family_history', 'treatment', 'Days_Indoors',
                     'Changes_Habits', 'Mental_Health_History', 'Mood_Swings','Coping_Struggles', 'Work_Interest', 'Social_Weakness','mental_health_interview','care_options']
 def calculate_chi_square(column1,column2 = 'Growing_Stress'):
     print(f"Correlation between **{column1}** and **{column2}**\n")
-    crosstab = pd.crosstab(health_data[column1],health_data[column2])
+    crosstab = pd.crosstab(health_data_student[column1],health_data_student[column2])
     stat,p,dof,expected = chi2_contingency(crosstab, correction = True)
     print(f'P_value = {p}, degrees of freedom =  {dof}')
     prob = 0.95
@@ -1541,12 +1541,12 @@ for col in cols:
 health_data_copy = health_data.copy()
 
 # Filter data to only include students
-health_data_students = health_data_copy[health_data_copy['Occupation'] == 'Student']
+health_data_student = health_data_copy[health_data_copy['Occupation'] == 'Student']
 
 # Preprocessing the dataset
 # Drop 'Timestamp' and other irrelevant columns for prediction
-X = health_data_students.drop(['Growing_Stress', 'Timestamp', 'Country', 'Occupation'], axis=1)  # Drop target and irrelevant columns
-y = health_data_students['Growing_Stress']  # Target column
+X = health_data_student.drop(['Growing_Stress', 'Timestamp', 'Country', 'Occupation'], axis=1)  # Drop target and irrelevant columns
+y = health_data_student['Growing_Stress']  # Target column
 
 # Convert categorical columns to numeric (if any)
 X = pd.get_dummies(X, drop_first=True)  # One-hot encoding for categorical features
