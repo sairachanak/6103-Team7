@@ -1146,7 +1146,8 @@ visualizer.show()
 
 # %%[markdown]
 # %%[markdown]
-# Desciion Tree Before Regularization
+
+# Desciion Tree
 
 target = encoded_final_df['Growing_Stress']
 
@@ -1156,251 +1157,340 @@ features = encoded_final_df.drop(['Growing_Stress'], axis=1)
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=0)
 
-# Initialize the Decision Tree Classifier
-clf = DTC(criterion='entropy', random_state=0)
+#%%
 
-# Fit the model
-clf.fit(X_train, y_train)
+# Base model with default parameters
+base_params = {
+    'max_depth': 10,         # No limit by default
+    'min_samples_split': 10,    # Default value
+    'min_samples_leaf': 20,      # Default value
+    'max_features': 'sqrt',      # Consider all features
+}
 
-# Evaluate the model
-accuracy = accuracy_score(y_test, clf.predict(X_test))
-print(f'Accuracy: {accuracy}')
+# Define K-Fold cross-validator
+kfold = KFold(n_splits=10, shuffle=True, random_state=0)
 
-# Calculate and print residual deviance
-resid_dev = log_loss(y_test, clf.predict_proba(X_test))
-print(f'Residual Deviance: {resid_dev}')
+#%%[markdown]
 
-# Plot the decision tree
-ax = subplots(figsize=(12, 12))[1]
-plot_tree(clf, feature_names=features.columns, ax=ax)
-
-# %%[markdown]
-
-
-# Section 2: Cross-Validation and Pruning
-from sklearn.model_selection import KFold
-
-# Calculate cost complexity pruning path
-ccp_path = clf.cost_complexity_pruning_path(X_train, y_train)
-
-# Initialize KFold for cross-validation
-kfold = KFold(n_splits=5, random_state=1, shuffle=True)
-
-
-# %%[markdown]
-# Section 3: Grid Search for Optimal Alpha
-
-
-# Grid search for optimal alpha
-grid = GridSearchCV(clf, {'ccp_alpha': ccp_path.ccp_alphas}, refit=True, cv=kfold, scoring='accuracy')
-grid.fit(X_train, y_train)
-
-# Best score from grid search
-print(f'Best Grid Search Score: {grid.best_score_}')
-
-# Visualize the best estimator
-best_clf = grid.best_estimator_
-ax = subplots(figsize=(12, 12))[1]
-plot_tree(best_clf, feature_names=features.columns, ax=ax)
-
-
-# %%[markdown]
-
-# Section 4: Evaluating the Best Estimator
-# Evaluate the best estimator
-best_accuracy = accuracy_score(y_test, best_clf.predict(X_test))
-print(f'Best Estimator Accuracy: {best_accuracy}')
-
-# Generate confusion matrix for best estimator
-best_confusion = confusion_matrix(y_test, best_clf.predict(X_test))
-print("Best Estimator Confusion Matrix:")
-print(best_confusion)
-
-# %%[markdown]
-# Though this looks like a pretty good model, it sems to be overfitting,
-# better todo some regularisation by decreasing the depth of the tree
-
-# %%[markdown]
-# Descision Tree After Regularisation
-# Step 1 : Fix depth of the tree and min_samples_split and leaf
-
-# Define the target and features
-target = encoded_final_df['Growing_Stress']
-features = encoded_final_df.drop(['Growing_Stress'], axis=1)
-
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=0)
-
-# While going through all the depth values, this seems to give the best model
-clf = DTC(criterion='entropy', 
-          max_depth=8,              
-          min_samples_split = 20,     
-          min_samples_leaf = 10,       
-          random_state=0)
-
-# %%[markdown]
-# Step 2 : Evaluation of the model using train and test logloss using 5-fold cross validation
-
-# Track log loss for training and testing
-train_log_losses = []
-test_log_losses = []
-max_log_loss_diff = float('-inf')  # Initialize to negative infinity
-best_params_log_loss_diff = {}
-
-# KFold for cross-validation
-kfold = KFold(n_splits=5, random_state=1, shuffle=True)
-
-# Perform K-Fold Cross-Validation to compute log loss
-for train_index, test_index in kfold.split(features):
-    X_fold_train, X_fold_test = features.iloc[train_index], features.iloc[test_index]
-    y_fold_train, y_fold_test = target.iloc[train_index], target.iloc[test_index]
+# Function to vary the parameters
+def tune_and_plot(param_name, param_values, base_params, X_train, y_train):
+    train_accuracies = []
+    test_accuracies = []
     
-    clf.fit(X_fold_train, y_fold_train)
+    for value in param_values:
+        # Update the parameter in the base configuration
+        params = base_params.copy()
+        params[param_name] = value
+        
+        # Create a DecisionTreeClassifier with the current parameters
+        model = DTC(**params, random_state=0)
+        
+        # Perform K-Fold Cross-Validation
+        train_scores = cross_val_score(model, X_train, y_train, cv=kfold, scoring='accuracy', n_jobs=-1)
+        train_accuracies.append(np.mean(train_scores))
+        
+        # Fit on train data and test on the same folds (to get "test-like" score)
+        model.fit(X_train, y_train)
+        test_accuracies.append(model.score(X_train, y_train))  # Simulated test set accuracy
     
-    # Log loss for training data
-    train_pred_proba = clf.predict_proba(X_fold_train)
-    train_log_loss = log_loss(y_fold_train, train_pred_proba)
-    train_log_losses.append(train_log_loss)
-    
-    # Log loss for testing data
-    test_pred_proba = clf.predict_proba(X_fold_test)
-    test_log_loss = log_loss(y_fold_test, test_pred_proba)
-    test_log_losses.append(test_log_loss)
-
-    # Calculate the difference between training and testing log loss
-    log_loss_diff = train_log_loss - test_log_loss
-    if log_loss_diff > max_log_loss_diff:
-        max_log_loss_diff = log_loss_diff
-        best_params_log_loss_diff['train_log_loss'] = train_log_loss
-        best_params_log_loss_diff['test_log_loss'] = test_log_loss
-        best_params_log_loss_diff['params'] = (clf.max_depth, clf.min_samples_split, clf.min_samples_leaf)
-
-# Average log losses
-average_train_log_loss = np.mean(train_log_losses)
-average_test_log_loss = np.mean(test_log_losses)
-
-print(f'Average Training Log Loss: {average_train_log_loss}')
-print(f'Average Testing Log Loss: {average_test_log_loss}')
-print(f'Best Parameters for Max Log Loss Difference: {best_params_log_loss_diff}')
-
-# Plotting training and testing log loss
-plt.figure(figsize=(10, 6))
-plt.plot(range(1, len(train_log_losses) + 1), train_log_losses, marker='o', label='Training Log Loss')
-plt.plot(range(1, len(test_log_losses) + 1), test_log_losses, marker='x', label='Testing Log Loss')
-plt.title('Log Loss Comparison: Training vs Testing')
-plt.xlabel('Fold Number')
-plt.ylabel('Log Loss')
-plt.legend()
-plt.grid()
-plt.show()
-
-# %%[markdown]
-# From this it could be observed that the model is not overfitting
-# as the training and testing log loss are almost equal.
-
-# %%[markdown]
-
-# Step 3 : Grid Search for Optimal Alpha using best parameters from previous log loss
-# Calculate cost complexity pruning path
-ccp_path = clf.cost_complexity_pruning_path(X_train, y_train)
-
-# Perform grid search for the optimal alpha
-grid = GridSearchCV(
-    DTC(criterion='entropy', random_state=0, max_depth=best_params_log_loss_diff['params'][0], 
-        min_samples_split=best_params_log_loss_diff['params'][1], min_samples_leaf=best_params_log_loss_diff['params'][2]),  
-    {'ccp_alpha': ccp_path.ccp_alphas},        
-    refit=True, 
-    cv=kfold, 
-    scoring='accuracy'
-)
-grid.fit(X_train, y_train)
-
-# Get the best estimator and evaluate it
-best_clf = grid.best_estimator_
-best_clf
-# %%[markdown]
-
-# Evaluate the model using optimal alpha by finding accuracy through k-fold cross validation
-accuracies = []
-for train_index, test_index in kfold.split(X_train):
-    X_fold_train, X_fold_test = X_train.iloc[train_index], X_train.iloc[test_index]
-    y_fold_train, y_fold_test = y_train.iloc[train_index], y_train.iloc[test_index]
-    
-    best_clf.fit(X_fold_train, y_fold_train)
-    accuracy = accuracy_score(y_fold_test, best_clf.predict(X_fold_test))
-    accuracies.append(accuracy)
-
-mean_accuracy = np.mean(accuracies)
-
-# Print accuracies and mean accuracy
-print(f'Accuracies from each fold: {accuracies}')
-print(f'Mean Accuracy: {mean_accuracy}')
-
-# Calculate ROC AUC for the best estimator
-best_y_proba = best_clf.predict_proba(X_test)[:, 1]
-best_roc_auc = roc_auc_score(y_test, best_y_proba)
-print(f'Best Estimator ROC AUC Score: {best_roc_auc}')
-
-
-# Visualize the best estimator
-plt.figure(figsize=(12, 12))
-plot_tree(best_clf, feature_names=features.columns, filled=True, class_names=True)
-plt.show()
-
-# %%[markdown]
-# Step 4 :  Generating Confusion matrix and ROC plot
-# Generate confusion matrix for best estimator
-
-best_confusion = confusion_matrix(y_test, best_clf.predict(X_test))
-print("Best Estimator Confusion Matrix:")
-print(best_confusion)
-
-
-
-# Calculate ROC AUC for the best estimator
-best_y_proba = best_clf.predict_proba(X_test)[:, 1]
-best_roc_auc = roc_auc_score(y_test, best_y_proba)
-print(f'Best Estimator ROC AUC Score: {best_roc_auc}')
+    # Plot the results
+    plt.figure(figsize=(10, 6))
+    plt.plot(param_values, train_accuracies, label='Train Accuracy', marker='o')
+    plt.plot(param_values, test_accuracies, label='Test Accuracy', marker='o')
+    plt.title(f'Effect of {param_name} on Accuracy', fontsize=16)
+    plt.xlabel(param_name, fontsize=14)
+    plt.ylabel('Accuracy', fontsize=14)
+    plt.legend()
+    plt.grid()
+    plt.show()
 
 #%%
-# Calculate FPR and TPR for ROC curve
-fpr, tpr, _ = roc_curve(y_test, best_y_proba)
+# Tune max_depth
+tune_and_plot('max_depth', [None, 5, 6, 7, 8, 9, 10], base_params, X_train, y_train)
 
-# Plotting ROC AUC
-plt.figure(figsize=(8, 6))
-plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {best_roc_auc:.2f})')
-plt.plot([0, 1], [0, 1], 'k--')  # Diagonal line for random guessing
-plt.title('Receiver Operating Characteristic (ROC) Curve')
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.legend()
+# At 9 test accuarcy seems to be the highest hence better to set max_depth as 9
+# If the tree becomes complex, we can decrease it later to 6 or 7 as test accuracy is still high for them
+#%%
+# Tune min_samples_split
+tune_and_plot('min_samples_split', [2, 5, 10, 15, 20], base_params, X_train, y_train)
+#%%
+# Tune min_samples_leaf
+tune_and_plot('min_samples_leaf', [1, 2, 5, 10, 20], base_params, X_train, y_train)
+#%%
+# Tune max_features
+tune_and_plot('max_features', ['sqrt', 'log2'], base_params, X_train, y_train)
+#%%
+# Now let's check the final accuracy with these parameters using k-fold cross validation
+# Define the final model with optimal parameters
+final_params = {
+    'max_depth': 9,           # Optimal depth found
+    'min_samples_split': 10,  # Higher value to prevent overfitting
+    'min_samples_leaf': 10,    # Based on accuracy analysis
+    'max_features': 'sqrt',    # Good practice
+}
+
+# Initialize the final Decision Tree model
+final_model = DTC(**final_params, random_state=0)
+
+# Set up K-Fold cross-validation
+kfold = KFold(n_splits=10, shuffle=True, random_state=0)  # 10 folds
+
+# Perform cross-validation and get scores for each fold
+cv_scores = cross_val_score(final_model, X_train, y_train, cv=kfold, scoring='accuracy')
+
+# Calculate mean and standard deviation of the cross-validation scores
+mean_cv_score = np.mean(cv_scores)
+std_cv_score = np.std(cv_scores)
+
+# Fit the final model on the entire training data
+final_model.fit(X_train, y_train)
+
+# Evaluate the final model on training and test data
+train_accuracy = final_model.score(X_train, y_train)
+test_accuracy = final_model.score(X_test, y_test)
+
+# Print results
+print("Cross-Validation Accuracies for Each Fold:", cv_scores)
+print("Mean Cross-Validation Accuracy:", mean_cv_score)
+print("Standard Deviation of Cross-Validation Accuracy:", std_cv_score)
+print("Final Training Accuracy:", train_accuracy)
+print("Final Test Accuracy:", test_accuracy)
+
+#%%
+# For depth = 9 it seems that the model has slightly greater test accuracy than train accuracy but the 
+# cross validation accuracy is high hence, this seems to be a good fit
+
+#%%
+# Confusion matrix and AUC, ROC
+y_pred = final_model.predict(X_test)
+y_pred_proba = final_model.predict_proba(X_test)[:, 1]  # Probability of the positive class
+
+# Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+cmd = ConfusionMatrixDisplay(confusion_matrix=cm)
+cmd.plot(cmap='Blues')
+plt.title('Confusion Matrix')
+plt.show()
+
+# ROC Curve and AUC
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
+roc_auc = roc_auc_score(y_test, y_pred_proba)
+
+plt.figure(figsize=(10, 6))
+plt.plot(fpr, tpr, color='blue', label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='red', linestyle='--')  # Diagonal line
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate', fontsize=14)
+plt.ylabel('True Positive Rate', fontsize=14)
+plt.title('Receiver Operating Characteristic (ROC) Curve', fontsize=16)
+plt.legend(loc='lower right')
 plt.grid()
 plt.show()
+
+# Print AUC score
+print("AUC Score:", roc_auc)
+
+# As observed we got an AUC of 0.93 which reflects that most of the classification has been done 
+# accurately.
+
+
+
+
+
+
 # %%[markdown]
 
-# Extract feature importances from the best estimator
-feature_importances = best_clf.feature_importances_
+# Random Forest
 
-# Create a DataFrame to hold the feature names and their importance
-importance_df = pd.DataFrame({
-    'Feature': features.columns,
-    'Importance': feature_importances
-})
+# Perform GridSearchCV to find the optimal parameters
 
-# Sort the DataFrame by importance
-importance_df = importance_df.sort_values(by='Importance', ascending=False)
+# Base model with default parameters
+base_params = {
+    'n_estimators': 10,
+    'max_depth': 7,
+    'min_samples_split': 20,
+    'min_samples_leaf': 20,
+    'max_features': 'log2',
+    'bootstrap': True
+}
 
-# Display the feature importances
-print(importance_df)
+# Define K-Fold cross-validator
+kfold = KFold(n_splits=10, shuffle=True, random_state=0)
 
-# Plotting feature importances
+
+#%%[markdown]
+# Function to vary the parameters
+
+def tune_and_plot(param_name, param_values, base_params, X_train, y_train):
+    train_accuracies = []
+    test_accuracies = []
+    
+    for value in param_values:
+        # Update the parameter in the base configuration
+        params = base_params.copy()
+        params[param_name] = value
+        
+        # Create a RandomForestClassifier with the current parameters
+        model = RandomForestClassifier(**params, random_state=0)
+        
+        # Perform K-Fold Cross-Validation
+        train_scores = cross_val_score(model, X_train, y_train, cv=kfold, scoring='accuracy', n_jobs=-1)
+        train_accuracies.append(np.mean(train_scores))
+        
+        # Fit on train data and test on the same folds (to get "test-like" score)
+        model.fit(X_train, y_train)
+        test_accuracies.append(model.score(X_train, y_train))  # Simulated test set accuracy
+    
+    # Plot the results
+    plt.figure(figsize=(10, 6))
+    plt.plot(param_values, train_accuracies, label='Train Accuracy', marker='o')
+    plt.plot(param_values, test_accuracies, label='Test Accuracy', marker='o')
+    plt.title(f'Effect of {param_name} on Accuracy', fontsize=16)
+    plt.xlabel(param_name, fontsize=14)
+    plt.ylabel('Accuracy', fontsize=14)
+    plt.legend()
+    plt.grid()
+    plt.show()
+#%%[markdown]
+
+tune_and_plot('n_estimators', [10, 20, 30, 50], base_params, X_train, y_train)
+
+# After estimators of 10 it seems that the train error rate increases compared to test error rate
+# hence best to set n_estimators as 10
+#%%
+
+tune_and_plot('max_depth', [5, 6, 7, 8,9, 10], base_params, X_train, y_train)
+# It seems that at max_depth = 7 the test accuracy is highest comapred to train hence 
+# better to set the max_depth to 7
+
+#%%
+
+tune_and_plot('min_samples_split', [5, 10, 15, 20], base_params, X_train, y_train)
+
+# It has same accuracy for all values hence better to set min_samples_split to 20
+# as it will reduce the complexity of the model
+#%%
+tune_and_plot('min_samples_leaf', [1, 5, 10, 20], base_params, X_train, y_train)
+
+# According to the graph it seems that min_samples_leaf has highest accuarcy hence better to set
+# min_samples_leaf to 20
+#%%
+
+tune_and_plot('max_features', ['sqrt', 'log2'], base_params, X_train, y_train)
+
+#%%
+tune_and_plot('bootstrap', [True, False], base_params, X_train, y_train)
+
+# According to the graph it is better to choose booststrap = TRUE
+#%%
+# Now lets check the final accuracy with these parameters using k-fold cross validation
+
+
+from sklearn.model_selection import cross_val_score, KFold
+from sklearn.ensemble import RandomForestClassifier
+
+# Define the final model with optimal parameters
+final_params = {
+    'n_estimators': 10,  # Optimal number of estimators
+    'max_depth': 7,      # Chosen based on previous tuning
+    'min_samples_split': 20,  # Higher value to prevent overfitting
+    'min_samples_leaf': 20,    # Based on accuracy analysis
+    'max_features': 'sqrt',     # Good practice
+    'bootstrap': True            # Default; can test with False if needed
+}
+
+# Initialize the final Random Forest model
+final_model = RandomForestClassifier(**final_params, random_state=0)
+
+# Set up K-Fold cross-validation
+kfold = KFold(n_splits=10, shuffle=True, random_state=0)  # 10 folds
+
+# Perform cross-validation and get scores for each fold
+cv_scores = cross_val_score(final_model, features, target, cv=kfold, scoring='accuracy')
+
+# Calculate mean and standard deviation of the cross-validation scores
+mean_cv_score = np.mean(cv_scores)
+std_cv_score = np.std(cv_scores)
+
+# Fit the final model on the entire training data
+final_model.fit(X_train, y_train)
+
+# Evaluate the final model on training and test data
+train_accuracy = final_model.score(X_train, y_train)
+test_accuracy = final_model.score(X_test, y_test)
+
+# Print results
+print("Cross-Validation Accuracies for Each Fold:", cv_scores)
+print("Mean Cross-Validation Accuracy:", mean_cv_score)
+print("Standard Deviation of Cross-Validation Accuracy:", std_cv_score)
+print("Final Training Accuracy:", train_accuracy)
+print("Final Test Accuracy:", test_accuracy)
+
+#%%
+# As seen the training testing accuracies along with highest cross validation accuracies seems to be 
+# almost same, hence we can choose this fit, if we want to reduce complexity and compromise accuracy it is 
+# good to choose depth 6 as well
+
+#%%
+# Confusion Matrix and ROC AUC
+
+# Make predictions on the test set from final model fit
+
+y_pred = final_model.predict(X_test)
+y_pred_proba = final_model.predict_proba(X_test)[:, 1]  # Probability of the positive class
+
+# Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+cmd = ConfusionMatrixDisplay(confusion_matrix=cm)
+cmd.plot(cmap='Blues')
+plt.title('Confusion Matrix')
+plt.show()
+
+# ROC Curve and AUC
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
+roc_auc = roc_auc_score(y_test, y_pred_proba)
+
 plt.figure(figsize=(10, 6))
-plt.barh(importance_df['Feature'], importance_df['Importance'], color='skyblue')
-plt.xlabel('Importance')
-plt.title('Feature Importances from Decision Tree Classifier')
-plt.gca().invert_yaxis()  # Invert y-axis to show the most important feature at the top
+plt.plot(fpr, tpr, color='blue', label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='red', linestyle='--')  # Diagonal line
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate', fontsize=14)
+plt.ylabel('True Positive Rate', fontsize=14)
+plt.title('Receiver Operating Characteristic (ROC) Curve', fontsize=16)
+plt.legend(loc='lower right')
 plt.grid()
 plt.show()
+
+# Print AUC score
+print("AUC Score:", roc_auc)
+
+# As observed we got an AUC of 0.97 which reflects that most of the classification has been done 
+# accurately.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1544,7 +1634,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 
 # Features and target
-X = encoded_final_df[['Mental_Health_History']]  # Using only 'Mental_Health_History' for prediction
+X = encoded_final_df.drop(['treatment','Occupation_Student','Occupation_Housewife','Occupation_Others','Occupation_Corporate'],axis=1)  # Using only 'Mental_Health_History' for prediction
 y = encoded_final_df['treatment']
 
 # Splitting data into training and test sets
@@ -1577,6 +1667,31 @@ if coeff > 0:
 else:
     print("A negative coefficient means that having a mental health history decreases the likelihood of seeking treatment.")
 
+#%%
+# Extract feature importance
+feature_importance = logreg.coef_[0]  # Coefficients for each feature
+feature_names = X.columns  # Names of the features
+
+# Combine them into a DataFrame for better visualization
+importance_df = pd.DataFrame({
+    'Feature': feature_names,
+    'Importance': feature_importance
+}).sort_values(by='Importance', key=abs, ascending=False)  # Sort by absolute importance
+
+# Display the feature importance
+print("Feature Importance:")
+print(importance_df)
+
+# Optional: Visualize the feature importance
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 6))
+plt.barh(importance_df['Feature'], importance_df['Importance'], color='skyblue')
+plt.xlabel('Coefficient Value')
+plt.ylabel('Features')
+plt.title('Feature Importance for Logistic Regression')
+plt.gca().invert_yaxis()  # Reverse the order for better readability
+plt.show()
 
 # %%
 # we got a positive coeficient and  it means having a mental health history  increases the likely hood of getting treatment
@@ -1603,7 +1718,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
 
 # Initialize and train the KNN model
-knn = KNeighborsClassifier(n_neighbors=5)  # Start with 5 neighbors
+knn = KNeighborsClassifier(n_neighbors=10)  # Start with 5 neighbors
 knn.fit(X_train, y_train)
 
 # Predict on the test set
@@ -1620,6 +1735,68 @@ print(confusion_matrix(y_test, y_pred_knn))
 # AUC-ROC
 roc_auc_knn = roc_auc_score(y_test, y_pred_proba_knn)
 print(f"KNN AUC-ROC: {roc_auc_knn:.2f}")
+
+
+#%%
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Initialize and train the Random Forest model
+rf = RandomForestClassifier(n_estimators= 20, max_depth= 5, random_state=42)  # You can tune hyperparameters
+rf.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred_rf = rf.predict(X_test)
+y_pred_proba_rf = rf.predict_proba(X_test)[:, 1]
+
+# Evaluate the model
+print("Random Forest Classification Report:")
+print(classification_report(y_test, y_pred_rf))
+
+print("Random Forest Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred_rf))
+
+# AUC-ROC
+roc_auc_rf = roc_auc_score(y_test, y_pred_proba_rf)
+print(f"Random Forest AUC-ROC: {roc_auc_rf:.2f}")
+
+# Feature Importance
+feature_importances = pd.DataFrame({
+    'Feature': X_train.columns,
+    'Importance': rf.feature_importances_
+}).sort_values(by='Importance', ascending=False)
+
+print("Feature Importances:")
+print(feature_importances)
+
+# Visualize Feature Importances
+plt.figure(figsize=(10, 6))
+plt.bar(feature_importances['Feature'], feature_importances['Importance'], color='skyblue')
+plt.title('Feature Importance (Random Forest)')
+plt.xlabel('Feature')
+plt.ylabel('Importance')
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+
+#From the above models it could be seen that the treatment with different models has the highest coefficent for
+#mental health history
+
+
+
+
+# After this need to maybe REMOVE CODE !!!!
+
+
+
+
+
+
+
+
+
 
 # %%
 from scipy.stats import chi2_contingency
