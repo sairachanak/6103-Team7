@@ -703,7 +703,6 @@ label_mappings = {
 figures = []
 
 # Loop through each feature in health_data
-# Loop through each feature in health_data
 for feature in health_data.columns:
     if feature not in ['Growing_Stress', 'Country']:  # Skip the Growing_Stress column
         # Calculate counts of Growing Stress for each category
@@ -787,6 +786,9 @@ for fig in figures:
 # Growing Stress vs Care options
 
 #%%[markdown]
+# Copy dataset for trying different Smart question
+health_data_backup = health_data.copy()
+
 # One - Hot Encoding the Occupation column
 final_df = health_data.drop(columns=['Country'])
 final_df['Occupation'] = final_df['Occupation'].astype(str)
@@ -796,6 +798,9 @@ categorical_columns = final_df.select_dtypes(include=['object']).columns.tolist(
 occupation_encoded = pd.get_dummies(final_df['Occupation'], prefix='Occupation', drop_first=True)
 encoded_final_df = pd.concat([final_df.drop('Occupation', axis=1), occupation_encoded], axis=1)
 encoded_final_df.head()
+
+
+
 
 # %%[markdown]
 # Correlation Matrix
@@ -1463,92 +1468,146 @@ print(classification_report(y_test, y_pred))
 
 #%%[markdown]
 # EDA specifically for the Student occupation
+
+# Data preparation
 # Filter data for 'Student' occupation
-student_data = health_data[health_data['Occupation'] == 'Student']
+health_data_student = health_data_backup[health_data_backup['Occupation'] == 'Student']
+
+# Drop unnecessary columns same as previous
+health_data_student = health_data_student.drop(columns=['Country'])
 
 # Check the first few rows of the filtered data
-student_data.head()
+health_data_student.head()
 
-#%%[markdown]
-# Distribution of Days_Indoors for Students
-# Plot distribution of 'Days_Indoors' for students
-sns.histplot(student_data['Days_Indoors'], kde=True, color='skyblue')
-plt.title('Distribution of Days Indoors for Students')
-plt.xlabel('Days Indoors')
-plt.ylabel('Frequency')
-plt.show()
-
-#%%[markdown]
-# Treatment vs Growing Stress for students
-sns.countplot(x='Growing_Stress', hue='treatment', data=student_data, palette='Set2')
-plt.title('Treatment vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Count')
-plt.show()
-
-#%%[markdown]
-# Changes in Habits vs Growing Stress for students
-sns.countplot(x='Growing_Stress', hue='Changes_Habits', data=student_data, palette='Set2')
-plt.title('Changes in Habits vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Count')
-
-# Move the legend (hue label) to the top-left
-plt.legend(title='Changes in Habits', loc='upper left', bbox_to_anchor=(0, 1))
-plt.show()
+# Check student data info
+health_data_student.info()
 
 
 #%%[markdown]
-# Coping Struggles vs Growing Stress for students
-sns.countplot(x='Growing_Stress', hue='Coping_Struggles', data=student_data, palette='Set2')
-plt.title('Coping Struggles vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Count')
-plt.show()
+# EDA for student start here
+
+# Initialize a list to hold figures_st
+figures_st = []
+
+# Loop through each feature in student_data
+for feature in health_data_student.columns:
+    if feature not in ['Growing_Stress', 'Occupation']:  # Skip the Growing_Stress, Occupation column
+        # Calculate counts of Growing Stress for each category
+        counts = health_data_student.groupby([feature, 'Growing_Stress']).size().unstack(fill_value=0)
+        
+        # Calculate percentages
+        percentages = counts.div(counts.sum(axis=1), axis=0) * 100
+        
+        # Create a stacked bar chart
+        fig = go.Figure()
+        
+        # Add traces for each Growing Stress value
+        for stress_value in percentages.columns:
+            fig.add_trace(go.Bar(
+                x=percentages.index.map(lambda x: label_mappings[feature].get(x, x) if feature in label_mappings else x),  # Apply label mapping only if feature is in label_mappings
+                y=percentages[stress_value],
+                name=f'Growing Stress: {("No" if stress_value == 0 else "Yes")}',  # Change legend labels
+                marker_color=color_palette[stress_value],
+                text=[f"{val:.1f}%" for val in percentages[stress_value]],  # Percentage text
+                textposition='inside'  # Center the text inside the bars
+            ))
+        
+        # Update layout for each figure
+        fig.update_layout(
+            title=f'Growing Stress Distribution by {feature}',
+            xaxis_title=feature,
+            yaxis_title='Percentage',
+            barmode='stack',
+            legend_title='Growing Stress',
+            template='plotly_white',
+            height=400,  # Adjust height for better visualization
+            margin=dict(l=40, r=40, t=40, b=40)
+        )
+        
+        # Add grid lines for better readability
+        fig.update_xaxes(showgrid=True, gridcolor='lightgray')
+        fig.update_yaxes(showgrid=True, gridcolor='lightgray')
+        
+        # Append the figure to the list
+        figures_st.append(fig)
+
+# Show all figures
+for fig in figures_st:
+    fig.show()
 
 #%%[markdown]
-# Social Weakness vs Growing Stress for students
-sns.countplot(x='Growing_Stress', hue='Social_Weakness', data=student_data, palette='Set2')
-plt.title('Social Weakness vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Count')
-plt.show()
+# Insights from ditributions
+#
+# Growing Stress vs Timestamp: 
+# The distribution differences across the years 2014, 2015, and 2016 are not significant. In all three years, the proportion of respondents answering "Yes" is higher.
+#
+# Growing Stress vs Gender:
+# Within the same gender, for male, the proportion of those who answered "Yes" to growing stress is higher than that of female.
+#
+# Growing Stress vs Self-employed/Family history/treatment :
+# The proportion looks similar between No and Yes groups.
 
-#%%[markdown]
-# Mood Swings vs Growing Stress for students
-sns.countplot(x='Growing_Stress', hue='Mood_Swings', data=student_data, palette='Set2')
-plt.title('Mood Swings vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Count')
-plt.show()
+# Growing Stress vs Days_Indoors: 
+# Students who spend more than 30 days away from home are more likely to experience growing stress.
 
-#%%[markdown]
-# Gender vs Growing Stress for students
-sns.countplot(x='Growing_Stress', hue='Gender', data=student_data, palette='Set2')
-plt.title('Gender vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Count')
-plt.show()
+# Growing Stress vs Changes Habits
 
-#%%[markdown]
-# Days Indoors vs Growing Stress for students
-sns.boxplot(x='Growing_Stress', y='Days_Indoors', data=student_data, palette='Set2')
-plt.title('Days Indoors vs Growing Stress for Students')
-plt.xlabel('Growing Stress')
-plt.ylabel('Days Indoors')
-plt.show()
+# Growing Stress vs Mental Health History
+
+# Growing Stress vs Mood Swings
+
+# Growing Stress vs Coping Struggles
+
+# Growing Stress vs Work Interest
+
+# Growing Stress vs Social Weakness
+
+# Growing Stress vs Mental Health Interview
+
+# Growing Stress vs Care options
 
 #%%[markdown]
 # Correlation heatmap for variables correlated with Growing Stress for students
-student_corr = student_data[['Days_Indoors', 'Growing_Stress', 'Changes_Habits', 'Coping_Struggles', 
+student_corr = health_data_student[['Days_Indoors', 'Growing_Stress', 'Changes_Habits', 'Coping_Struggles', 
                              'Mood_Swings', 'Social_Weakness', 'treatment']].corr()
 plt.figure(figsize=(8, 6))
 sns.heatmap(student_corr, annot=True, cmap='coolwarm', fmt='.2f', linewidths=0.5)
 plt.title('Correlation Heatmap for Growing Stress and Related Variables for Students')
 plt.show()
 
+#%%[markdown]
+# Statistical tests for student
+from scipy.stats import chi2_contingency, chi2
 
-# %%
+cols= ['Timestamp','Gender','Country','self_employed','family_history', 'treatment', 'Days_Indoors',
+                    'Changes_Habits', 'Mental_Health_History', 'Mood_Swings','Coping_Struggles', 'Work_Interest', 'Social_Weakness','mental_health_interview','care_options']
+def calculate_chi_square(column1,column2 = 'Growing_Stress'):
+    print(f"Correlation between **{column1}** and **{column2}**\n")
+    crosstab = pd.crosstab(health_data[column1],health_data[column2])
+    stat,p,dof,expected = chi2_contingency(crosstab, correction = True)
+    print(f'P_value = {p}, degrees of freedom =  {dof}')
+    prob = 0.95
+    critical = chi2.ppf(prob,dof)
+    print(f'probability = %.3f, critical = %.3f, stat = %.3f' %(prob,critical,stat) )
+    if stat >= critical:
+        print('dependent(reject(Ho))')
+    else:
+        print('independent(accept(Ho))')
+    alpha = 1.0 - prob
+    print(f'significance = %.3f, p-value = %.3f' %(alpha,p))
+    if p <= alpha:
+        print('dependent(reject(Ho))')
+    else:
+        print('independent(accept(Ho))')
+    print('\n-----------------------------------\n')
+print('** Chi_square Correlation between Dichotomous features with Target:Growing stress**\n')
+for col in cols:
+    calculate_chi_square(col)
+
+#%%[markdown]
+# Modeling For Student - yonathan
+
+# %% What is this for? ####################################
 # Gender, occupation, family_history,treatment, Days_indoors, changes_habits, mental_health_history,
 # mood_swings, coping_struggles, work_interest, social weakness, mental_health_interview, care_options
 # have a significant p-value suggesting that the growing stress levels for these groups is different for
