@@ -24,6 +24,7 @@ from yellowbrick.model_selection import FeatureImportances
 
 #Correlation
 from scipy.stats import spearmanr
+from scipy.stats import chi2_contingency, chi2
 
 
 # Validation libraries
@@ -785,6 +786,88 @@ for fig in figures:
 
 # Growing Stress vs Care options
 
+#$$[markdown]
+# EDA for Treatment
+
+# Define a new color palette for treatment (0 for 'No' and 1 for 'Yes')
+treatment_color_palette = {
+    0: 'rgba(144, 238, 144, 0.6)',  # Light Green for 'No' treatment
+    1: 'rgba(255, 0, 0, 0.6)'        # Red for 'Yes' treatment
+}
+
+# Label mapping dictionary for various columns
+new_label_mappings = {
+    'Growing_Stress': {0: 'No', 1: 'Yes'},
+    'Gender': {0: 'Male', 1: 'Female'},
+    'self_employed': {0: 'No', 1: 'Yes'},
+    'family_history': {0: 'No', 1: 'Yes'},
+    'treatment': {0: 'No', 1: 'Yes'},
+    'Days_Indoors': {7.5: '1-14 days', 22.5: '15-30 days', 45: '31-60 days', 60: 'More than 2 months', 365: 'Go out Every day'},
+    'Changes_Habits': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'Mood_Swings': {0: 'Low', 1: 'Medium', 2: 'High'},
+    'Mental_Health_History': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'Coping_Struggles': {0: 'No', 1: 'Yes'},
+    'Work_Interest': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'Social_Weakness': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'mental_health_interview': {0: 'No', 1: 'Yes', 2: 'Maybe'},
+    'care_options': {0: 'No', 1: 'Yes', 2: 'Not sure'}
+}
+
+# Initialize a list to hold the figures for treatment-related plots
+treatment_relation_figures = []
+
+# Loop through each feature in health_data (focus on columns that are not 'treatment' and not 'Timestamp')
+for feature in health_data.columns:
+    if feature not in ['treatment', 'Timestamp']:  # Skip 'treatment' and 'Timestamp' columns
+        # Calculate the count of each category within the feature and grouped by treatment status
+        feature_counts = health_data.groupby([feature, 'treatment']).size().unstack(fill_value=0)
+        
+        # Normalize counts to percentages
+        feature_percentages = feature_counts.div(feature_counts.sum(axis=1), axis=0) * 100
+        
+        # Create a new figure for the current feature
+        feature_fig = go.Figure()
+
+        # Add traces for each treatment status (0: No, 1: Yes)
+        for treatment_status in feature_percentages.columns:
+            feature_fig.add_trace(go.Bar(
+                # Apply label mapping for the feature if it exists in label_mappings
+                x=feature_percentages.index.map(
+                    lambda x: label_mappings[feature].get(x, x) if feature in label_mappings else x
+                ),  # Use label mapping only for features with mappings
+                y=feature_percentages[treatment_status],  # Use the percentage for each treatment status
+                name=f'Treatment: {label_mappings["treatment"].get(treatment_status, treatment_status)}',  # Name the trace based on treatment status
+                marker_color=treatment_color_palette[treatment_status],  # Color based on treatment status
+                text=[f"{val:.1f}%" for val in feature_percentages[treatment_status]],  # Percentage text
+                textposition='inside'  # Text inside the bars
+            ))
+
+        # Update layout for the figure
+        feature_fig.update_layout(
+            title=f'Treatment Status by {feature}',
+            xaxis_title=feature,
+            yaxis_title='Percentage',
+            barmode='stack',
+            legend_title='Treatment Status',
+            template='plotly_white',
+            height=400,  # Adjust height for better visualization
+            margin=dict(l=40, r=40, t=40, b=40)
+        )
+
+        # Add grid lines for readability
+        feature_fig.update_xaxes(showgrid=True, gridcolor='lightgray')
+        feature_fig.update_yaxes(showgrid=True, gridcolor='lightgray')
+
+        # Append the figure to the list of treatment-related figures
+        treatment_relation_figures.append(feature_fig)
+
+# Show all treatment-related figures
+for fig in treatment_relation_figures:
+    fig.show()
+
+#%%[markdown]
+# Statistical Testing for Treatment
+
 #%%[markdown]
 # Copy dataset for trying different Smart question
 health_data_backup = health_data.copy()
@@ -839,7 +922,6 @@ plt.show()
 
 # %%[markdown]
 # Statistical tests
-from scipy.stats import chi2_contingency, chi2
 
 cols= ['Timestamp','Gender','Country','Occupation','self_employed','family_history', 'treatment', 'Days_Indoors',
                     'Changes_Habits', 'Mental_Health_History', 'Mood_Swings','Coping_Struggles', 'Work_Interest', 'Social_Weakness','mental_health_interview','care_options']
