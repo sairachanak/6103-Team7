@@ -2022,6 +2022,6 @@ coefficients = pd.DataFrame({
 
 print(coefficients)
 #Given the model we just built, the strongest coefficients seem to be Days_Indoors, Mood_Swings, and social_weakness,
-#Let's try to remove some of the unimportant variables to test if model accuracy will improve
+
 
 # %%
