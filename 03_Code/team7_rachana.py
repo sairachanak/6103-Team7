@@ -1,4 +1,17 @@
-#%%
+# %%[markdown]
+# Introduction  : How can we develop models to assess mental stress,
+# and which factors are most influential in predicting 
+# mental health outcomes
+# SMART questions : 
+# 1. What are the top 5 factors that influence the growing stress?
+# 2. Do people with family history receive treatment or not?
+# 3. Q3. What are the factors that impact the growing stress for students?
+
+
+
+
+#%%[markdown]
+# Importing Libraries
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -43,7 +56,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import RandomizedSearchCV
 
-#%%
+# %%[markdown]
+# Importing the Dataset
 # Get the current directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -870,7 +884,7 @@ for fig in treatment_relation_figures:
 #%%[markdown]
 # Statistical Testing for Treatment
 
-#%%[markdown]
+# %%[markdown]
 # Copy dataset for trying different Smart question
 health_data_backup = health_data.copy()
 
@@ -1167,11 +1181,13 @@ visualizer.fit(Xtrain, Ytrain)
 
 # Show the visualization
 visualizer.show()
+#%%
+y_pred = model.predict(Xtest)
 
+# Generate classification report
+print("Classification Report:")
+print(classification_report(Ytest, y_pred))
 
-
-
-# %%[markdown]
 # %%[markdown]
 
 # Desciion Tree
@@ -1276,6 +1292,8 @@ final_model.fit(X_train, y_train)
 train_accuracy = final_model.score(X_train, y_train)
 test_accuracy = final_model.score(X_test, y_test)
 
+
+
 # Print results
 print("Cross-Validation Accuracies for Each Fold:", cv_scores)
 print("Mean Cross-Validation Accuracy:", mean_cv_score)
@@ -1283,6 +1301,12 @@ print("Standard Deviation of Cross-Validation Accuracy:", std_cv_score)
 print("Final Training Accuracy:", train_accuracy)
 print("Final Test Accuracy:", test_accuracy)
 
+#%%
+y_pred = final_model.predict(X_test)
+
+# Generate classification report
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
 #%%
 # For depth = 9 it seems that the model has slightly greater test accuracy than train accuracy but the 
 # cross validation accuracy is high hence, this seems to be a good fit
@@ -1514,6 +1538,12 @@ print("AUC Score:", roc_auc)
 
 # As observed we got an AUC of 0.97 which reflects that most of the classification has been done 
 # accurately.
+#%%
+y_pred = final_model.predict(X_test)
+
+# Generate classification report
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
 
 #%%
 # Train the Random Forest model on training data
@@ -1575,60 +1605,6 @@ print("\nClassification Report:")
 print(classification_report(y_test, y_pred))
 
 
-# %%
-from sklearn.model_selection import GridSearchCV
-
-param_grid = {
-    'n_neighbors': [3, 5, 7, 9, 11],
-    'weights': ['uniform', 'distance'],
-    'metric': ['euclidean', 'manhattan']
-}
-
-grid_search = GridSearchCV(KNeighborsClassifier(), param_grid, cv=5)
-grid_search.fit(X_train, y_train)
-
-best_knn = grid_search.best_estimator_
-
-# %%
-from sklearn.model_selection import cross_val_score
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
-
-cv_scores = cross_val_score(best_knn, X, y, cv=5)
-print(f"Cross-validation scores: {cv_scores}")
-print(f"Mean CV score: {cv_scores.mean():.4f}")
-
-
-# %%
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
-
-# Initialize and train the KNN model
-knn = KNeighborsClassifier(n_neighbors=5)
-knn.fit(X_train, y_train)
-
-# Make predictions
-y_pred = knn.predict(X_test)
-y_pred_proba = knn.predict_proba(X_test)[:, 1]
-
-# Calculate performance metrics
-accuracy = accuracy_score(y_test, y_pred)
-conf_matrix = confusion_matrix(y_test, y_pred)
-roc_auc = roc_auc_score(y_test, y_pred_proba)
-
-# Cross-validation score
-cv_scores = cross_val_score(knn, X, y, cv=5)
-
-print(f"Accuracy: {accuracy:.4f}")
-print(f"ROC AUC Score: {roc_auc:.4f}")
-print(f"Cross-validation scores: {cv_scores}")
-print(f"Mean CV score: {cv_scores.mean():.4f}")
-
-print("\nConfusion Matrix:")
-print(conf_matrix)
-
-print("\nClassification Report:")
-print(classification_report(y_test, y_pred))
 #%%
 # As we can see the model is overfitting and the cross validation results suggest the model has high variance 
 # and changes for different data.
@@ -2054,92 +2030,3 @@ coefficients = pd.DataFrame({
 print(coefficients)
 #Given the model we just built, the strongest coefficients seem to be Days_Indoors, Mood_Swings, and social_weakness,
 #Let's try to remove some of the unimportant variables to test if model accuracy will improve
-
-
-
-#%%[markdown]
-# Before the unknown factor to create the normal model without the unknown factor
-
-#%%[markdown]
-# Random Forest
-
-# Create a copy of the health_data to avoid modifying the original
-health_data_copy = health_data.copy()
-
-# Filter data to only include students
-health_data_student = health_data_copy[health_data_copy['Occupation'] == 'Student']
-
-# Preprocessing the dataset
-# Drop 'Timestamp' and other irrelevant columns for prediction
-X = health_data_student.drop(['Growing_Stress', 'Timestamp', 'Country', 'Occupation'], axis=1)  # Drop target and irrelevant columns
-y = health_data_student['Growing_Stress']  # Target column
-
-# Convert categorical columns to numeric (if any)
-X = pd.get_dummies(X, drop_first=True)  # One-hot encoding for categorical features
-
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# Scale the features (Important for Random Forest and other models)
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-# Train the Random Forest Classifier
-rf = RandomForestClassifier(n_estimators=100, random_state=42)
-rf.fit(X_train_scaled, y_train)
-
-# Get predicted probabilities for each class
-y_pred_proba = rf.predict_proba(X_test_scaled)
-
-# One-vs-Rest approach: Binarize the target labels for multiclass classification
-y_test_bin = label_binarize(y_test, classes=[0, 1, 2])  # Binarize the target labels (0, 1, 2)
-
-# Compute AUC for each class (One-vs-Rest)
-roc_auc = roc_auc_score(y_test_bin, y_pred_proba, average='macro', multi_class='ovr')
-
-# Plot the ROC curve for each class
-plt.figure(figsize=(8, 6))
-for i in range(3):  # 3 classes: 0, 1, and 2
-    fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_pred_proba[:, i])
-    plt.plot(fpr, tpr, lw=2, label=f'Class {i} (AUC = {roc_auc_score(y_test_bin[:, i], y_pred_proba[:, i]):.2f})')
-
-# Plot diagonal line for random classifier
-plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
-
-# Set plot labels and title
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Multiclass ROC Curve (One-vs-Rest) for Students')
-plt.legend(loc='lower right')
-plt.show()
-
-# Print the Macro AUC score
-print(f"Macro AUC-ROC score for Students: {roc_auc:.2f}")
-#%%[markdown]
-# A Macro AUC-ROC score of 1.00, might be because of Overfitting, Data Imbalance(Growing_Stress (with values 0, 1, 2)
-# We tried additioanl validation
-
-#%%[markdown]
-# Perform cross-validation (e.g., 5-fold)
-cv_scores = cross_val_score(rf, X, y, cv=5, scoring='roc_auc_ovr')
-print(f'Cross-validated AUC-ROC scores: {cv_scores}')
-print(f'Mean AUC-ROC score from cross-validation: {cv_scores.mean():.2f}')
-
-# Check Class Distribution
-print(y.value_counts())
-
-# Confusion Matrix
-# Generate confusion matrix
-cm = confusion_matrix(y_test, rf.predict(X_test_scaled))
-print(cm)
-
-#%%[markdown]
-# The AUC scores across folds range from 0.45 to 0.75, with a mean AUC of 0.62
-# Class 2: 22,915 samples, Class 1: 21,424 samples, Class 0: 16,348 samples <- little imblanced, but not extreme
-# Class 0 (Stress Level 0): The model has made no misclassifications, indicating that it is very confident when predicting the "no stress" class.
-# Class 1 (Stress Level 1): The model is performing fairly well, with a few misclassifications (12).
-# Class 2 (Stress Level 2): The model is performing quite well here too, with a very small number of misclassifications (17)
-

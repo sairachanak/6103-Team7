@@ -29,6 +29,7 @@ from scipy.stats import chi2_contingency, chi2
 
 # Validation libraries
 from sklearn import metrics
+from sklearn.model_selection import KFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_recall_curve
 from sklearn.model_selection import cross_val_score
