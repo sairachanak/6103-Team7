@@ -2,15 +2,19 @@
 # Introduction  : How can we develop models to assess mental stress,
 # and which factors are most influential in predicting 
 # mental health outcomes
+#
 # SMART questions : 
+#
 # 1. What are the top 5 factors that influence the growing stress?
+#
 # 2. Do people with family history receive treatment or not?
+#
 # 3. Q3. What are the factors that impact the growing stress for students?
 
 
 
 
-#%%[markdown]
+# %%[markdown]
 # Importing Libraries
 import numpy as np
 import pandas as pd
@@ -77,7 +81,7 @@ print(health_data.isnull().sum())
 print(health_data.dropna(inplace=True))
 health_data.info()
 
-#%%[markdown]
+# %%[markdown]
 # Cleaning Grwoing Stress column
 
 # Assuming health_data is your DataFrame
@@ -150,7 +154,7 @@ health_data = process_timestamp_to_year(health_data, 'Timestamp')
 print(health_data[['Timestamp']].head())
 print(health_data['Timestamp'].info())
 
-#%%
+# %%
 print(health_data['Timestamp'].unique())
 
 # %%
@@ -766,7 +770,7 @@ for fig in figures:
     fig.show()
 
 
-#%%[markdown] - Haeyeon
+# %%[markdown] - Haeyeon
 # Insights from ditributions
 
 # Growing Stress vs Timestamp
@@ -881,7 +885,7 @@ for feature in health_data.columns:
 for fig in treatment_relation_figures:
     fig.show()
 
-#%%[markdown]
+# %%[markdown]
 # Statistical Testing for Treatment
 
 # %%[markdown]
@@ -965,11 +969,11 @@ for col in cols:
     calculate_chi_square(col)
 
 
-#%%[markdown]
+# %%[markdown]
 # As the Timestamp, Country, self-employed are independednt of Growing Stress and also have a highly unbalanced data
 # it is better to remove those columns for our Modelling.
 
-#%%[markdown]
+# %%[markdown]
 # Modelling
 
 encoded_final_df = encoded_final_df.drop(columns=['Timestamp', 'self_employed'])
@@ -980,7 +984,7 @@ y = f_data
 Xtrain, Xtest, Ytrain, Ytest = train_test_split(data, f_data, test_size=0.2, random_state=42)
 methodDict = {}
 
-#%%
+# %%
 logit = LogisticRegression()  # instantiate
 logit.fit( Xtrain, Ytrain )
 print('Logit model accuracy (with the test set):', logit.score(Xtest, Ytest))
@@ -1127,7 +1131,7 @@ def evalClassModel(model, y_test, y_pred_class, plot=False):
     
     return accuracy
 #
-#%%[markdown]
+# %%[markdown]
 # Logistic regression
 
 def logisticRegression():
@@ -1170,7 +1174,7 @@ def logisticRegression():
     
 logisticRegression()
 
-#%%
+# %%
 model = LogisticRegression(max_iter=1000)
 
 # Create the feature importances visualizer
@@ -1181,7 +1185,7 @@ visualizer.fit(Xtrain, Ytrain)
 
 # Show the visualization
 visualizer.show()
-#%%
+# %%
 y_pred = model.predict(Xtest)
 
 # Generate classification report
@@ -1200,7 +1204,7 @@ features = encoded_final_df.drop(['Growing_Stress'], axis=1)
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=0)
 
-#%%
+# %%
 
 # Base model with default parameters
 base_params = {
@@ -1213,7 +1217,7 @@ base_params = {
 # Define K-Fold cross-validator
 kfold = KFold(n_splits=10, shuffle=True, random_state=0)
 
-#%%[markdown]
+# %%[markdown]
 
 # Function to vary the parameters
 def tune_and_plot(param_name, param_values, base_params, X_train, y_train):
@@ -1247,22 +1251,22 @@ def tune_and_plot(param_name, param_values, base_params, X_train, y_train):
     plt.grid()
     plt.show()
 
-#%%
+# %%
 # Tune max_depth
 tune_and_plot('max_depth', [None, 5, 6, 7, 8, 9, 10], base_params, X_train, y_train)
 
 # At 9 test accuarcy seems to be the highest hence better to set max_depth as 9
 # If the tree becomes complex, we can decrease it later to 6 or 7 as test accuracy is still high for them
-#%%
+# %%
 # Tune min_samples_split
 tune_and_plot('min_samples_split', [2, 5, 10, 15, 20], base_params, X_train, y_train)
-#%%
+# %%
 # Tune min_samples_leaf
 tune_and_plot('min_samples_leaf', [1, 2, 5, 10], base_params, X_train, y_train)
-#%%
+# %%
 # Tune max_features
 tune_and_plot('max_features', ['sqrt', 'log2'], base_params, X_train, y_train)
-#%%
+# %%
 # Now let's check the final accuracy with these parameters using k-fold cross validation
 # Define the final model with optimal parameters
 final_params = {
@@ -1301,17 +1305,17 @@ print("Standard Deviation of Cross-Validation Accuracy:", std_cv_score)
 print("Final Training Accuracy:", train_accuracy)
 print("Final Test Accuracy:", test_accuracy)
 
-#%%
+# %%
 y_pred = final_model.predict(X_test)
 
 # Generate classification report
 print("Classification Report:")
 print(classification_report(y_test, y_pred))
-#%%
+# %%
 # For depth = 9 it seems that the model has slightly greater test accuracy than train accuracy but the 
 # cross validation accuracy is high hence, this seems to be a good fit
 
-#%%
+# %%
 # Confusion matrix and AUC, ROC
 y_pred = final_model.predict(X_test)
 y_pred_proba = final_model.predict_proba(X_test)[:, 1]  # Probability of the positive class
@@ -1344,7 +1348,7 @@ print("AUC Score:", roc_auc)
 
 # As observed we got an AUC of 0.93 which reflects that most of the classification has been done 
 # accurately.
-#%%
+# %%
 # Feature Importance
 
 feature_importances = pd.DataFrame({
@@ -1389,7 +1393,7 @@ base_params = {
 kfold = KFold(n_splits=10, shuffle=True, random_state=0)
 
 
-#%%[markdown]
+# %%[markdown]
 # Function to vary the parameters
 
 def tune_and_plot(param_name, param_values, base_params, X_train, y_train):
@@ -1422,38 +1426,38 @@ def tune_and_plot(param_name, param_values, base_params, X_train, y_train):
     plt.legend()
     plt.grid()
     plt.show()
-#%%[markdown]
+# %%[markdown]
 
 tune_and_plot('n_estimators', [10, 20, 30, 50], base_params, X_train, y_train)
 
 # After estimators of 10 it seems that the train error rate increases compared to test error rate
 # hence best to set n_estimators as 10
-#%%
+# %%
 
 tune_and_plot('max_depth', [5, 6, 7, 8,9, 10], base_params, X_train, y_train)
 # It seems that at max_depth = 7 the test accuracy is highest comapred to train hence 
 # better to set the max_depth to 7
 
-#%%
+# %%
 
 tune_and_plot('min_samples_split', [5, 10, 15, 20], base_params, X_train, y_train)
 
 # It has same accuracy for all values hence better to set min_samples_split to 20
 # as it will reduce the complexity of the model
-#%%
+# %%
 tune_and_plot('min_samples_leaf', [1, 5, 10, 20], base_params, X_train, y_train)
 
 # According to the graph it seems that min_samples_leaf has highest accuarcy hence better to set
 # min_samples_leaf to 20
-#%%
+# %%
 
 tune_and_plot('max_features', ['sqrt', 'log2'], base_params, X_train, y_train)
 
-#%%
+# %%
 tune_and_plot('bootstrap', [True, False], base_params, X_train, y_train)
 
 # According to the graph it is better to choose booststrap = TRUE
-#%%
+# %%
 # Now lets check the final accuracy with these parameters using k-fold cross validation
 
 
@@ -1497,12 +1501,12 @@ print("Standard Deviation of Cross-Validation Accuracy:", std_cv_score)
 print("Final Training Accuracy:", train_accuracy)
 print("Final Test Accuracy:", test_accuracy)
 
-#%%
+# %%
 # As seen the training testing accuracies along with highest cross validation accuracies seems to be 
 # almost same, hence we can choose this fit, if we want to reduce complexity and compromise accuracy it is 
 # good to choose depth 6 as well
 
-#%%
+# %%
 # Confusion Matrix and ROC AUC
 
 # Make predictions on the test set from final model fit
@@ -1538,14 +1542,14 @@ print("AUC Score:", roc_auc)
 
 # As observed we got an AUC of 0.97 which reflects that most of the classification has been done 
 # accurately.
-#%%
+# %%
 y_pred = final_model.predict(X_test)
 
 # Generate classification report
 print("Classification Report:")
 print(classification_report(y_test, y_pred))
 
-#%%
+# %%
 # Train the Random Forest model on training data
 final_model.fit(Xtrain, Ytrain)
 
@@ -1576,7 +1580,7 @@ plt.tight_layout()
 plt.show()
 
 
-#%% KNN
+# %% KNN
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
@@ -1605,7 +1609,7 @@ print("\nClassification Report:")
 print(classification_report(y_test, y_pred))
 
 
-#%%
+# %%
 # As we can see the model is overfitting and the cross validation results suggest the model has high variance 
 # and changes for different data.
 
@@ -1802,7 +1806,7 @@ plt.show()
 
 
 
-#%%[markdown]
+# %%[markdown]
 # Q3 - What are the top 5 factors thats impact the growing stress in students  
 # Data preparation
 # Filter data for 'Student' occupation
@@ -1819,7 +1823,7 @@ health_data_student.head()
 health_data_student.info()
 
 
-#%%[markdown]
+# %%[markdown]
 # EDA for student start here
 
 # Initialize a list to hold figures_st
@@ -1871,7 +1875,7 @@ for feature in health_data_student.columns:
 for fig in figures_st:
     fig.show()
 
-#%%[markdown]
+# %%[markdown]
 # Insights from ditributions
 #
 # Growing Stress vs Timestamp: 
