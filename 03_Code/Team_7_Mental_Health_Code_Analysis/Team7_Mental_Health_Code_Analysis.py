@@ -2012,8 +2012,6 @@ plt.show()
 
 from sklearn.model_selection import cross_val_score
 cross_val_score(log_reg, X_train_scaled, y_train, cv=5)
-#Initial AUC of 0.62 and accuracy of 0.61. We aren't satisfied so we have to try to do feature engineering.
-
 
 # Evaluate feature importance
 coefficients = pd.DataFrame({
