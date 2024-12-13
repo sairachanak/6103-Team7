@@ -1,17 +1,4 @@
-# %%[markdown]
-# Introduction  : How can we develop models to assess mental stress,
-# and which factors are most influential in predicting 
-# mental health outcomes
-# SMART questions : 
-# 1. What are the top 5 factors that influence the growing stress?
-# 2. Do people with family history receive treatment or not?
-# 3. Q3. What are the factors that impact the growing stress for students?
-
-
-
-
-#%%[markdown]
-# Importing Libraries
+#%%
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -26,7 +13,6 @@ import plotly.graph_objects as go
 # prep
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
-from sklearn.model_selection import KFold
 from sklearn.datasets import make_classification
 from sklearn.preprocessing import binarize, LabelEncoder, MinMaxScaler, StandardScaler, label_binarize
 from sklearn.preprocessing import OneHotEncoder
@@ -43,7 +29,7 @@ from scipy.stats import chi2_contingency, chi2
 
 # Validation libraries
 from sklearn import metrics
-from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.model_selection import KFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_recall_curve
 from sklearn.model_selection import cross_val_score
@@ -56,8 +42,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import RandomizedSearchCV
 
-# %%[markdown]
-# Importing the Dataset
+#%%
 # Get the current directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -884,7 +869,7 @@ for fig in treatment_relation_figures:
 #%%[markdown]
 # Statistical Testing for Treatment
 
-# %%[markdown]
+#%%[markdown]
 # Copy dataset for trying different Smart question
 health_data_backup = health_data.copy()
 
@@ -1142,31 +1127,6 @@ def logisticRegression():
     
     #Data for final graph
     methodDict['Log. Regression'] = accuracy_score * 100
-
-    coefficients = logreg.coef_[0]
-    features = Xtrain.columns
-
-    # Create a DataFrame for feature importances
-    feature_importances = pd.DataFrame({
-        'Feature': features,
-        'Importance': coefficients  # Direct coefficients without abs()
-    }).sort_values(by='Importance', ascending=False)
-
-    # Display the top 5 features
-    top_5_features = feature_importances.head(5)
-    print("Top 5 Features by Importance:")
-    print(top_5_features)
-
-    # Plot the top 5 features
-    plt.figure(figsize=(10, 6))
-    plt.bar(top_5_features['Feature'], top_5_features['Importance'], color='skyblue')
-    plt.title('Top 5 Feature Importances (Logistic Regression)')
-    plt.xlabel('Feature')
-    plt.ylabel('Importance (Coefficients)')
-    plt.xticks(rotation=45, ha='right')
-    plt.tight_layout()
-    plt.show()
-
     
 logisticRegression()
 
@@ -1181,13 +1141,11 @@ visualizer.fit(Xtrain, Ytrain)
 
 # Show the visualization
 visualizer.show()
-#%%
-y_pred = model.predict(Xtest)
 
-# Generate classification report
-print("Classification Report:")
-print(classification_report(Ytest, y_pred))
 
+
+
+# %%[markdown]
 # %%[markdown]
 
 # Desciion Tree
@@ -1258,7 +1216,7 @@ tune_and_plot('max_depth', [None, 5, 6, 7, 8, 9, 10], base_params, X_train, y_tr
 tune_and_plot('min_samples_split', [2, 5, 10, 15, 20], base_params, X_train, y_train)
 #%%
 # Tune min_samples_leaf
-tune_and_plot('min_samples_leaf', [1, 2, 5, 10], base_params, X_train, y_train)
+tune_and_plot('min_samples_leaf', [1, 2, 5, 10, 20], base_params, X_train, y_train)
 #%%
 # Tune max_features
 tune_and_plot('max_features', ['sqrt', 'log2'], base_params, X_train, y_train)
@@ -1292,8 +1250,6 @@ final_model.fit(X_train, y_train)
 train_accuracy = final_model.score(X_train, y_train)
 test_accuracy = final_model.score(X_test, y_test)
 
-
-
 # Print results
 print("Cross-Validation Accuracies for Each Fold:", cv_scores)
 print("Mean Cross-Validation Accuracy:", mean_cv_score)
@@ -1301,12 +1257,6 @@ print("Standard Deviation of Cross-Validation Accuracy:", std_cv_score)
 print("Final Training Accuracy:", train_accuracy)
 print("Final Test Accuracy:", test_accuracy)
 
-#%%
-y_pred = final_model.predict(X_test)
-
-# Generate classification report
-print("Classification Report:")
-print(classification_report(y_test, y_pred))
 #%%
 # For depth = 9 it seems that the model has slightly greater test accuracy than train accuracy but the 
 # cross validation accuracy is high hence, this seems to be a good fit
@@ -1344,27 +1294,8 @@ print("AUC Score:", roc_auc)
 
 # As observed we got an AUC of 0.93 which reflects that most of the classification has been done 
 # accurately.
-#%%
-# Feature Importance
 
-feature_importances = pd.DataFrame({
-    'Feature': X_train.columns,
-    'Importance': final_model.feature_importances_
-}).sort_values(by='Importance', ascending=False)
 
-# Print feature importances
-print("Feature Importances (Descending Order):")
-print(feature_importances)
-
-# Visualize feature importances
-plt.figure(figsize=(10, 6))
-plt.bar(feature_importances['Feature'], feature_importances['Importance'], color='teal')
-plt.title('Feature Importance (Decision Tree)')
-plt.xlabel('Feature')
-plt.ylabel('Importance')
-plt.xticks(rotation=45, ha='right')
-plt.tight_layout()
-plt.show()
 
 
 
@@ -1538,45 +1469,34 @@ print("AUC Score:", roc_auc)
 
 # As observed we got an AUC of 0.97 which reflects that most of the classification has been done 
 # accurately.
-#%%
-y_pred = final_model.predict(X_test)
-
-# Generate classification report
-print("Classification Report:")
-print(classification_report(y_test, y_pred))
-
-#%%
-# Train the Random Forest model on training data
-final_model.fit(Xtrain, Ytrain)
-
-# Extract feature importances
-feature_importances = final_model.feature_importances_
-
-# Create a DataFrame to sort and visualize feature importances
-importance_df = pd.DataFrame({
-    'Feature': Xtrain.columns,
-    'Importance': feature_importances
-}).sort_values(by='Importance', ascending=False)
-
-# Display the top 5 important features
-top_5_features = importance_df.head(5)
-print("Top 5 Features by Importance:")
-print(top_5_features)
-
-# Plot the top 5 features
-import matplotlib.pyplot as plt
-
-plt.figure(figsize=(10, 6))
-plt.bar(top_5_features['Feature'], top_5_features['Importance'], color='skyblue')
-plt.title('Top 5 Feature Importances (Random Forest)')
-plt.xlabel('Feature')
-plt.ylabel('Importance')
-plt.xticks(rotation=45, ha='right')
-plt.tight_layout()
-plt.show()
 
 
-#%% KNN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#%% KNN on Whole data set
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
@@ -1605,52 +1525,111 @@ print("\nClassification Report:")
 print(classification_report(y_test, y_pred))
 
 
-#%%
-# As we can see the model is overfitting and the cross validation results suggest the model has high variance 
-# and changes for different data.
+# %%
+from sklearn.model_selection import GridSearchCV
 
-# %%  Abirham - Q2
-# Do people with Family history receive treatment or not?
-# how well "Family History" predicts whether a person will seek treatment
-# %%[markdown]
-# EDA between Family History and Treatment
-plt.figure(figsize=(8, 6))
-sns.countplot(x='family_history', hue='treatment', data=encoded_final_df, palette='Set2')
-plt.title('Family History vs Treatment')
-plt.xlabel('Family History')
-plt.ylabel('Count')
-plt.legend(title='Treatment', loc='upper right')
-plt.show()
+param_grid = {
+    'n_neighbors': [3, 5, 7, 9, 11],
+    'weights': ['uniform', 'distance'],
+    'metric': ['euclidean', 'manhattan']
+}
 
-# %%[markdown]
-# Statistcial Testing
+grid_search = GridSearchCV(KNeighborsClassifier(), param_grid, cv=5)
+grid_search.fit(X_train, y_train)
+
+best_knn = grid_search.best_estimator_
+
+# %%
+from sklearn.model_selection import cross_val_score
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+
+cv_scores = cross_val_score(best_knn, X, y, cv=5)
+print(f"Cross-validation scores: {cv_scores}")
+print(f"Mean CV score: {cv_scores.mean():.4f}")
+
+
+# %%
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+
+# Initialize and train the KNN model
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+# Make predictions
+y_pred = knn.predict(X_test)
+y_pred_proba = knn.predict_proba(X_test)[:, 1]
+
+# Calculate performance metrics
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+roc_auc = roc_auc_score(y_test, y_pred_proba)
+
+# Cross-validation score
+cv_scores = cross_val_score(knn, X, y, cv=5)
+
+print(f"Accuracy: {accuracy:.4f}")
+print(f"ROC AUC Score: {roc_auc:.4f}")
+print(f"Cross-validation scores: {cv_scores}")
+print(f"Mean CV score: {cv_scores.mean():.4f}")
+
+print("\nConfusion Matrix:")
+print(conf_matrix)
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+
+# %%  Abirham
+# Do people with Mental health history receive treatment or not?
+# how well "Mental Health History" predicts whether a person will seek treatment
+
+# %%
+import pandas as pd
 from scipy.stats import chi2_contingency
 
-# Contingency table
-contingency_table = pd.crosstab(encoded_final_df['family_history'], encoded_final_df['treatment'])
+# Let's first examine the unique values for 'Mental_Health_History' and 'Treatment'
+print(encoded_final_df['Mental_Health_History'].unique())
+print(encoded_final_df['treatment'].unique())
 
-# Perform Chi-Square Test
-chi2_stat, p_value, dof, expected = chi2_contingency(contingency_table)
+# Performing a Chi-Square Test for Independence to check if there's a relationship between the two variables
+crosstab = pd.crosstab(encoded_final_df['Mental_Health_History'], encoded_final_df['treatment'])
+stat, p, dof, expected = chi2_contingency(crosstab)
 
-print(f"Chi-Square Test Results:")
-print(f"Chi-Square Statistic: {chi2_stat:.2f}")
-print(f"P-value: {p_value:.4f}")
-if p_value < 0.05:
-    print("Family History is significantly associated with Treatment.")
+print(f"Chi-Square Test: p-value = {p}")
+if p < 0.05:
+    print("There is a significant association between Mental Health History and Treatment.")
 else:
-    print("Family History is NOT significantly associated with Treatment.")
+    print("There is no significant association between Mental Health History and Treatment.")
 
-# %%[markdown]
-# Without Family History (family_history=0):
-# A larger proportion of people do not seek treatment (green bar) compared to those who do (orange bar).
-# This suggests that individuals without a family history of mental health issues are less likely to seek treatment overall.
-# With Family History (family_history=1):
-# A significantly larger proportion of people with a family history of mental health issues seek treatment (orange bar) compared to those who do not (green bar).
-# This suggests that having a family history of mental health issues is positively associated with seeking treatment.
+# %%
+# the small p  value indicates that there is a strong association between mental_health_history and treatment
+# %%
+# visualizations to better understand the relationship between "Mental Health History" and "Treatment".
+import pandas as pd
+import matplotlib.pyplot as plt
+import mplcursors
+
+# Group data for the plot
+grouped_data = encoded_final_df.groupby(['Mental_Health_History', 'treatment']).size().unstack()
+
+# Create a stacked bar chart
+ax = grouped_data.plot(kind='bar', stacked=True, figsize=(10, 6), colormap='Set2')
+plt.title('Mental Health History vs Treatment')
+plt.xlabel('Mental Health History')
+plt.ylabel('Count')
+plt.legend(title='Treatment')
+
+# Add interactivity
+mplcursors.cursor(ax, hover=True)
+
+# Show the plot
+plt.tight_layout()
+plt.show()
 
 
-# %%[markdown]
-#  Modelling - Logistic Regression
+# %% modelling
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
@@ -1680,9 +1659,17 @@ print(confusion_matrix(y_test, y_pred))
 accuracy = accuracy_score(y_test, y_pred)
 print(f"Accuracy of the Logistic Regression Model: {accuracy:.2f}")
 
+# %% Feature importance
+# Getting the coefficient for 'Mental_Health_History' from the logistic regression model
+coeff = logreg.coef_[0][0]
+print(f"Coefficient for Mental Health History: {coeff:.4f}")
+if coeff > 0:
+    print("A positive coefficient means that having a mental health history increases the likelihood of seeking treatment.")
+else:
+    print("A negative coefficient means that having a mental health history decreases the likelihood of seeking treatment.")
 
-# %%[markdown]
-# Feature importance for Logistic Regression
+#%%
+# Extract feature importance
 feature_importance = logreg.coef_[0]  # Coefficients for each feature
 feature_names = X.columns  # Names of the features
 
@@ -1708,9 +1695,8 @@ plt.gca().invert_yaxis()  # Reverse the order for better readability
 plt.show()
 
 # %%
-# we got a positive coeficient and  it means having a family history  increases the likely hood of getting treatment
-# %%[markdown]
-# Evaluation for the model
+# we got a positive coeficient and  it means having a mental health history  increases the likely hood of getting treatment
+# %%
 from sklearn.metrics import roc_auc_score, roc_curve
 
 # AUC-ROC
@@ -1728,8 +1714,7 @@ plt.title('Receiver Operating Characteristic (ROC) Curve')
 plt.legend(loc='lower right')
 plt.show()
 
-# %%[markdown]
-# Modelling - KNN
+# %%
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
 
@@ -1751,11 +1736,13 @@ print(confusion_matrix(y_test, y_pred_knn))
 # AUC-ROC
 roc_auc_knn = roc_auc_score(y_test, y_pred_proba_knn)
 print(f"KNN AUC-ROC: {roc_auc_knn:.2f}")
-# %%[markdown]
-# The KNN doesnot perform well with this data.
 
-# %%[markdown]
-# Modelling - Random Forest
+
+#%%
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+import pandas as pd
+import matplotlib.pyplot as plt
 
 # Initialize and train the Random Forest model
 rf = RandomForestClassifier(n_estimators= 20, max_depth= 5, random_state=42)  # You can tune hyperparameters
@@ -1795,18 +1782,234 @@ plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 plt.show()
 
-# From the above models it could be seen that the treatment with different models has the highest coefficent for
-# family history
+#From the above models it could be seen that the treatment with different models has the highest coefficent for
+#mental health history
+
+
+
+
+# After this need to maybe REMOVE CODE !!!!
+
+
+
+
+
+
+
+
+
+
+# %%
+from scipy.stats import chi2_contingency
+
+# Contingency table
+contingency_table = pd.crosstab(encoded_final_df['family_history'], encoded_final_df['treatment'])
+
+# Perform Chi-Square Test
+chi2_stat, p_value, dof, expected = chi2_contingency(contingency_table)
+
+print(f"Chi-Square Test Results:")
+print(f"Chi-Square Statistic: {chi2_stat:.2f}")
+print(f"P-value: {p_value:.4f}")
+if p_value < 0.05:
+    print("Family History is significantly associated with Treatment.")
+else:
+    print("Family History is NOT significantly associated with Treatment.")
+
+
+# %%
+# EDA between Family History and Treatment
+plt.figure(figsize=(8, 6))
+sns.countplot(x='family_history', hue='treatment', data=encoded_final_df, palette='Set2')
+plt.title('Family History vs Treatment')
+plt.xlabel('Family History')
+plt.ylabel('Count')
+plt.legend(title='Treatment', loc='upper right')
+plt.show()
+
+# EDA between Mental Health History, Family History, and Treatment
+plt.figure(figsize=(10, 8))
+sns.heatmap(encoded_final_df.groupby(['Mental_Health_History', 'family_history'])['treatment']
+            .mean().unstack(), annot=True, fmt='.2f', cmap='coolwarm', cbar_kws={'label': 'Treatment Rate'})
+plt.title('Mental Health History and Family History vs Treatment Rate')
+plt.xlabel('Family History')
+plt.ylabel('Mental Health History')
+plt.show()
+
+# %%[markdown]
+# Without Family History (family_history=0):
+# A larger proportion of people do not seek treatment (green bar) compared to those who do (orange bar).
+# This suggests that individuals without a family history of mental health issues are less likely to seek treatment overall.
+# With Family History (family_history=1):
+# A significantly larger proportion of people with a family history of mental health issues seek treatment (orange bar) compared to those who do not (green bar).
+# This suggests that having a family history of mental health issues is positively associated with seeking treatment.
+# %%  KNN model for family Histor  mental Health History and treatment
+
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    roc_curve,
+    confusion_matrix,
+    classification_report
+)
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+
+# Define features and target
+X = encoded_final_df[['Mental_Health_History', 'family_history']]  # Two variables
+y = encoded_final_df['treatment']  # Target
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+# Initialize and train the KNN model
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+# Predictions
+y_pred = knn.predict(X_test)
+y_pred_proba = knn.predict_proba(X_test)[:, 1]
+
+# Metrics
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+auc_roc = roc_auc_score(y_test, y_pred_proba)
+
+print("Performance Metrics for KNN:")
+print(f"Accuracy: {accuracy:.2f}")
+print(f"Precision: {precision:.2f}")
+print(f"Recall: {recall:.2f}")
+print(f"F1-Score: {f1:.2f}")
+print(f"AUC-ROC: {auc_roc:.2f}")
+
+# Confusion Matrix
+conf_matrix = confusion_matrix(y_test, y_pred)
+print("\nConfusion Matrix:")
+print(conf_matrix)
+
+# Confusion Matrix Visualization
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
+            xticklabels=['No Treatment', 'Treatment'], 
+            yticklabels=['No Treatment', 'Treatment'])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.show()
+
+# ROC Curve
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
+plt.figure(figsize=(10, 8))
+plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {auc_roc:.2f})', color='darkorange', linewidth=2)
+plt.plot([0, 1], [0, 1], color='navy', linestyle='--', linewidth=1.5)
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.legend(loc='lower right')
+plt.grid(alpha=0.4)
+plt.show()
+
+# Classification Report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Bar Chart of Performance Metrics
+metrics = {'Accuracy': accuracy, 'Precision': precision, 'Recall': recall, 'F1-Score': f1, 'AUC-ROC': auc_roc}
+plt.figure(figsize=(10, 6))
+plt.bar(metrics.keys(), metrics.values(), color=['skyblue', 'orange', 'green', 'purple', 'red'])
+plt.ylim(0, 1)
+plt.title('Performance Metrics')
+plt.ylabel('Score')
+plt.xlabel('Metric')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
+
+
+
+# %%
+
+
+
+# %% 
+
+# %%
+from sklearn.model_selection import GridSearchCV
+
+# Define parameter grid
+param_grid = {
+    'n_neighbors': [3, 5, 7, 9],
+    'weights': ['uniform', 'distance'],
+    'metric': ['euclidean', 'manhattan']
+}
+
+# Perform Grid Search
+grid_knn = GridSearchCV(KNeighborsClassifier(), param_grid, cv=5, scoring='roc_auc')
+grid_knn.fit(X_train, y_train)
+
+# Best model
+best_knn = grid_knn.best_estimator_
+print(f"Best parameters: {grid_knn.best_params_}")
+
+# Evaluate best KNN
+y_pred_best = best_knn.predict(X_test)
+y_pred_proba_best = best_knn.predict_proba(X_test)[:, 1]
+print(f"Optimized KNN AUC-ROC: {roc_auc_score(y_test, y_pred_proba_best):.2f}")
+
+
+# %%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 
 
 #%%[markdown]
-# Q3 - What are the top 5 factors thats impact the growing stress in students  
+# EDA specifically for the Student occupation
+
 # Data preparation
 # Filter data for 'Student' occupation
-
 health_data_student = health_data_backup[health_data_backup['Occupation'] == 'Student']
 
 # Drop unnecessary columns same as previous
@@ -1902,8 +2105,7 @@ for fig in figures_st:
 
 # Growing Stress vs Care options
 
-# %%[markdown]
-
+#%%[markdown]
 # Correlation heatmap for variables correlated with Growing Stress for students
 student_corr = health_data_student[['Days_Indoors', 'Growing_Stress', 'Changes_Habits', 'Coping_Struggles', 
                              'Mood_Swings', 'Social_Weakness', 'treatment']].corr()
@@ -1912,8 +2114,7 @@ sns.heatmap(student_corr, annot=True, cmap='coolwarm', fmt='.2f', linewidths=0.5
 plt.title('Correlation Heatmap for Growing Stress and Related Variables for Students')
 plt.show()
 
-# %%[markdown]
-
+#%%[markdown]
 # Statistical tests for student
 from scipy.stats import chi2_contingency, chi2
 
@@ -1942,9 +2143,10 @@ print('** Chi_square Correlation between Dichotomous features with Target:Growin
 for col in cols:
     calculate_chi_square(col)
 
-# %%[markdown]
-
+#%%[markdown]
 # Modeling For Student - yonathan
+
+
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
@@ -2030,3 +2232,515 @@ coefficients = pd.DataFrame({
 print(coefficients)
 #Given the model we just built, the strongest coefficients seem to be Days_Indoors, Mood_Swings, and social_weakness,
 #Let's try to remove some of the unimportant variables to test if model accuracy will improve
+
+
+
+
+# %% What is this for? ####################################
+# Gender, occupation, family_history,treatment, Days_indoors, changes_habits, mental_health_history,
+# mood_swings, coping_struggles, work_interest, social weakness, mental_health_interview, care_options
+# have a significant p-value suggesting that the growing stress levels for these groups is different for
+# different categories. We are also removing the gender variable as it has unequal distribution
+
+
+#%%[markdown]
+# Before the unknown factor to create the normal model without the unknown factor
+
+#%%[markdown]
+# Random Forest -haeyeon
+
+# Create a copy of the health_data to avoid modifying the original
+health_data_copy = health_data.copy()
+
+# Filter data to only include students
+health_data_student = health_data_copy[health_data_copy['Occupation'] == 'Student']
+
+# Preprocessing the dataset
+# Drop 'Timestamp' and other irrelevant columns for prediction
+X = health_data_student.drop(['Growing_Stress', 'Timestamp', 'Country', 'Occupation'], axis=1)  # Drop target and irrelevant columns
+y = health_data_student['Growing_Stress']  # Target column
+
+# Convert categorical columns to numeric (if any)
+X = pd.get_dummies(X, drop_first=True)  # One-hot encoding for categorical features
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Scale the features (Important for Random Forest and other models)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Train the Random Forest Classifier
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X_train_scaled, y_train)
+
+# Get predicted probabilities for each class
+y_pred_proba = rf.predict_proba(X_test_scaled)
+
+# One-vs-Rest approach: Binarize the target labels for multiclass classification
+y_test_bin = label_binarize(y_test, classes=[0, 1, 2])  # Binarize the target labels (0, 1, 2)
+
+# Compute AUC for each class (One-vs-Rest)
+roc_auc = roc_auc_score(y_test_bin, y_pred_proba, average='macro', multi_class='ovr')
+
+# Plot the ROC curve for each class
+plt.figure(figsize=(8, 6))
+for i in range(3):  # 3 classes: 0, 1, and 2
+    fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_pred_proba[:, i])
+    plt.plot(fpr, tpr, lw=2, label=f'Class {i} (AUC = {roc_auc_score(y_test_bin[:, i], y_pred_proba[:, i]):.2f})')
+
+# Plot diagonal line for random classifier
+plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+
+# Set plot labels and title
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Multiclass ROC Curve (One-vs-Rest) for Students')
+plt.legend(loc='lower right')
+plt.show()
+
+# Print the Macro AUC score
+print(f"Macro AUC-ROC score for Students: {roc_auc:.2f}")
+#%%[markdown]
+# A Macro AUC-ROC score of 1.00, might be because of Overfitting, Data Imbalance(Growing_Stress (with values 0, 1, 2)
+# We tried additioanl validation
+
+#%%[markdown]
+# Perform cross-validation (e.g., 5-fold)
+cv_scores = cross_val_score(rf, X, y, cv=5, scoring='roc_auc_ovr')
+print(f'Cross-validated AUC-ROC scores: {cv_scores}')
+print(f'Mean AUC-ROC score from cross-validation: {cv_scores.mean():.2f}')
+
+# Check Class Distribution
+print(y.value_counts())
+
+# Confusion Matrix
+# Generate confusion matrix
+cm = confusion_matrix(y_test, rf.predict(X_test_scaled))
+print(cm)
+
+#%%[markdown]
+# The AUC scores across folds range from 0.45 to 0.75, with a mean AUC of 0.62
+# Class 2: 22,915 samples, Class 1: 21,424 samples, Class 0: 16,348 samples <- little imblanced, but not extreme
+# Class 0 (Stress Level 0): The model has made no misclassifications, indicating that it is very confident when predicting the "no stress" class.
+# Class 1 (Stress Level 1): The model is performing fairly well, with a few misclassifications (12).
+# Class 2 (Stress Level 2): The model is performing quite well here too, with a very small number of misclassifications (17)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#%%[markdown]
+# We have a the "unknown factor" quantifies the portion of the variance in Growing_Stress that is unexplained by the selected features.
+# (i) Calculate the weighted probability of all features, ensuring the total feature weights sum to 1 and the 
+# conditional probability if found for each feature.
+# (ii) If the total weights are less than 1, it indicates growing stress due to personal reasons. 
+# (iii) This suggests that an unknown factor is impacting the growing stress. And create a new feature unknown factor.
+# (iv) This will help us have a more certainity in Growing factor by utilising the unknown factor to bring the 
+# Growing stress from 3 classes to 2 classes
+# 
+#%%[markdown]
+#caluclate the conditional probability
+cols = health_data[['Occupation', 'self_employed', 'family_history', 'treatment', 'Days_Indoors',
+                     'Changes_Habits', 'Mental_Health_History', 'Growing_Stress', 'Mood_Swings', 'Coping_Struggles',
+                     'Work_Interest', 'Social_Weakness', 'mental_health_interview', 'care_options']]
+
+def calculate_conditional_pro(feature1, feature2='Growing_Stress'):
+    column = pd.crosstab(index=health_data[feature1], columns=health_data[feature2], normalize='columns')
+    print(f"Probability of {feature1} given {feature2}:\n")
+    print(f'Column conditional probability:\n{column}')
+    print('\n------------------------------------------\n')
+    return column
+
+for con in cols:
+    data = calculate_conditional_pro(con)
+#%%[markdown]
+# Create DataFrame
+df = pd.DataFrame(health_data)
+
+# Selected features
+selected_features = ['Timestamp','Gender', 'Country', 'Occupation', 'self_employed', 'family_history', 'treatment', 'Days_Indoors',
+                     'Changes_Habits', 'Mental_Health_History', 'Growing_Stress', 'Mood_Swings', 'Coping_Struggles',
+                     'Work_Interest', 'Social_Weakness', 'mental_health_interview', 'care_options']
+
+# Calculate the frequency of each feature value given each target value
+conditional_probs = {feature: {} for feature in selected_features}
+
+for feature in selected_features:
+    for target in df['Growing_Stress'].unique():
+        conditional_probs[feature][target] = {}
+        for value in df[feature].unique():
+            prob = df[(df[feature] == value) & (df['Growing_Stress'] == target)].shape[0] / df[df['Growing_Stress'] == target].shape[0]
+            conditional_probs[feature][target][value] = prob
+
+# Calculate the average conditional probability for each feature for 'Yes' and 'No'
+avg_cond_probs = {}
+total_avg_cond_prob = {}
+for target in df['Growing_Stress'].unique():
+    avg_cond_probs[target] = {}
+    total_avg_cond_prob[target] = 0
+    for feature in selected_features:
+        avg_cond_probs[target][feature] = np.mean(list(conditional_probs[feature][target].values()))
+        total_avg_cond_prob[target] += avg_cond_probs[target][feature]
+weights = {}
+for target in df['Growing_Stress'].unique():
+    weights[target] = {}
+    for feature in selected_features:
+        weights[target][feature] = avg_cond_probs[target][feature] / total_avg_cond_prob[target]
+
+# Create temporary columns for each feature probability
+for target in df['Growing_Stress'].unique():
+    for feature in selected_features:
+        df[f'{feature}_prob_{target}'] = df[feature].map(conditional_probs[feature][target])
+
+#%%
+# Calculate the combined new feature as a weighted sum of the conditional probabilities for both 'Yes' and 'No'
+df['New_Feature'] = sum(df[f'{feature}_prob_1'] * weights[1][feature] + df[f'{feature}_prob_0'] * weights[0][feature] for feature in selected_features)
+df['unknown_factor'] = 1 - df['New_Feature']
+pd.set_option('display.max_columns', None)
+df.head()
+#%%
+# Keep only necessary columns
+final_df = df[['Occupation',  'family_history', 'treatment', 'Days_Indoors',
+                     'Changes_Habits', 'Mental_Health_History', 'Mood_Swings', 'Coping_Struggles',
+                     'Work_Interest', 'Social_Weakness', 'mental_health_interview', 'care_options', 'unknown_factor','Growing_Stress']]
+
+final_df.head()
+
+#%%
+# Group by Growing_Stress and calculate the mean of unknown_factor
+mean_unknown_factor = final_df.groupby('Growing_Stress')['unknown_factor'].mean()
+print(mean_unknown_factor)
+
+print(final_df['unknown_factor'].median())
+threshold = final_df['unknown_factor'].median()
+
+print(threshold)
+
+
+
+# %%[markdown] - how to explain unknown factor by utilizing some visualization ---- start from haeyeon
+
+# 1. Distribution of Conditional Probabilities per Feature
+# Visualize how the conditional probability of each feature varies across the different values of Growing_Stress
+# Display the distribution of the conditional probabilities for each feature, so you can see how the features behave for each category of Growing_Stress (e.g., Yes, No).
+
+def plot_conditional_probability(feature, conditional_probs):
+    """
+    Plot the distribution of conditional probabilities for a specific feature across Growing_Stress classes.
+    """
+    plt.figure(figsize=(10, 6))
+    for target in conditional_probs[feature]:
+        values = list(conditional_probs[feature][target].values())
+        sns.histplot(values, kde=True, label=f'Growing_Stress {target}', color='blue' if target == 1 else 'orange')
+    
+    plt.title(f"Conditional Probability Distribution for {feature} by Growing_Stress")
+    plt.xlabel('Conditional Probability')
+    plt.ylabel('Frequency')
+    plt.legend()
+    plt.show()
+
+# Example: Visualizing conditional probabilities for the 'Occupation' feature
+plot_conditional_probability('Occupation', conditional_probs)
+
+
+# %%[markdown]
+# 2. Feature Weights Visualization
+# how each feature contributes to explaining the variance in Growing_Stress by showing the weights for each feature.
+# Show the weights calculated for each feature, indicating how much each feature contributes to the overall model
+
+def plot_feature_weights(weights):
+    """
+    Plot feature weights, which represent how much each feature contributes to the model.
+    """
+    # Flatten the feature weights for plotting
+    feature_names = list(weights[1].keys())
+    feature_weights = [weights[1][feature] + weights[0][feature] for feature in feature_names]  # Sum of weights for both Yes and No
+
+    # Plotting
+    plt.figure(figsize=(12, 6))
+    sns.barplot(x=feature_names, y=feature_weights, palette='viridis')
+    plt.title('Feature Weights for Growing_Stress')
+    plt.xlabel('Feature')
+    plt.ylabel('Weight')
+    plt.xticks(rotation=90)
+    plt.tight_layout()
+    plt.show()
+
+# Visualize feature weights for Growing_Stress
+plot_feature_weights(weights)
+print(final_df.columns)
+# %%[markdown]
+# 3. Unknown Factor Distribution
+# visualize its distribution to see how much it contributes to each data point.
+# Display the distribution of the unknown factor and compare it with the classification of Growing_Stress to see how the factor influences the classification
+
+def plot_unknown_factor_distribution(df):
+    """
+    Plot the distribution of the 'unknown_factor' and how it relates to 'Growing_Stress' classifications.
+    """
+    plt.figure(figsize=(10, 6))
+    sns.histplot(df['unknown_factor'], kde=True, color='green')
+    
+    plt.title('Distribution of Unknown Factor')
+    plt.xlabel('Unknown Factor')
+    plt.ylabel('Frequency')
+    
+    # Show how unknown_factor is related to Growing_Stress
+    plt.figure(figsize=(10, 6))
+    sns.boxplot(x='Growing_Stress', y='unknown_factor', data=df, palette='Set2')
+    plt.title('Unknown Factor by Growing_Stress Class')
+    plt.xlabel('Growing_Stress')
+    plt.ylabel('Unknown Factor')
+    plt.show()
+
+# Visualize the unknown factor distribution and how it relates to Growing_Stress
+plot_unknown_factor_distribution(final_df)
+
+# %%[markdown]
+# 4. Impact of Threshold on Classification
+# visualize how the unknown_factor affects the binary classification of Growing_Stress
+# plot a histogram of the unknown_factor values and use a threshold to split the data into 0 (No Stress) and 1 (Stress)
+# Display how the threshold (set to the median) splits the data into two categories, allowing you to visualize how the unknown_factor affects classification.
+
+def plot_threshold_impact(df, threshold):
+    """
+    Plot the impact of the threshold on Growing_Stress classification.
+    """
+    plt.figure(figsize=(10, 6))
+
+    # Plot the histogram of unknown_factor
+    sns.histplot(df['unknown_factor'], kde=True, color='purple', label='Unknown Factor', bins=30)
+
+    # Add threshold line
+    plt.axvline(x=threshold, color='red', linestyle='--', label=f'Threshold: {threshold:.2f}')
+    
+    # Display
+    plt.title('Impact of Threshold on Growing_Stress Classification')
+    plt.xlabel('Unknown Factor')
+    plt.ylabel('Frequency')
+    plt.legend()
+    plt.show()
+
+# Plot the impact of the threshold on the classification of Growing_Stress
+plot_threshold_impact(final_df, threshold)
+
+#%% [markdown]
+# 5. Final Classification Overview
+# After the transformation of Growing_Stress based on the unknown factor, we can visualize the final class distribution of Growing_Stress (either 0 or 1), comparing it to the original categories
+# Show the final distribution of Growing_Stress after applying the threshold to classify it into two categories (1 for stress, 0 for no stress)
+
+def plot_final_classification(final_df):
+    """
+    Visualize the final classification of Growing_Stress (0 or 1).
+    """
+    plt.figure(figsize=(8, 6))
+    sns.countplot(x='Growing_Stress', data=final_df, palette='pastel')
+    plt.title('Final Classification of Growing_Stress')
+    plt.xlabel('Growing_Stress')
+    plt.ylabel('Count')
+    plt.show()
+
+# Plot the final classification of Growing_Stress
+plot_final_classification(final_df)
+
+#%% [markdown] -- haeyeon end of unknown factor visualization
+
+#%%
+# Set threshold based on the mean or a slightly higher value
+  # or use another positive threshold based on analysis
+
+# Convert Growing_Stress from 2 to 0 and 1 based on unknown_factor
+final_df['Growing_Stress'] = final_df.apply(
+    lambda row: 1 if row['unknown_factor'] > threshold else 0 
+    if row['Growing_Stress'] == 2 else row['Growing_Stress'], axis=1
+)
+# Check the updated values
+print(final_df['Growing_Stress'].value_counts())
+
+#%%
+final_df = final_df.drop('unknown_factor',axis = 1)
+
+#%%[markdown]
+# Random Forest
+def randomForest():
+    # Calculating the best parameters
+    forest = RandomForestClassifier(n_estimators = 20)
+
+    featuresSize = Xtrain.shape[1]
+    param_dist = {"max_depth": [3, None],
+              "max_features": randint(1, featuresSize),
+              "min_samples_split": randint(2, 9),
+              "min_samples_leaf": randint(1, 9),
+              "criterion": ["gini", "entropy"]}
+    
+    # Building and fitting my_forest
+    forest = RandomForestClassifier(max_depth = None, min_samples_leaf=8, min_samples_split=2, n_estimators = 20, random_state = 1)
+    my_forest = forest.fit(Xtrain, Ytrain)
+    
+    # make class predictions for the testing set
+    y_pred_class = my_forest.predict(Xtest)
+    
+    accuracy_score = evalClassModel(my_forest, Ytest, y_pred_class, True)
+
+    #Data for final graph
+    methodDict['Random Forest'] = accuracy_score * 100
+
+    feature_names = Xtrain.columns if hasattr(Xtrain, 'columns') else [f"Feature {i}" for i in range(Xtrain.shape[1])]
+    plot_feature_importance(my_forest, feature_names)
+randomForest()
+
+
+
+
+
+# %%[makrdown]
+# Feature importance and selection
+
+
+
+
+# %%[markdown]
+# As seen from the summary Gender plays a very important role and contributes the most to the Growing stress followed by
+# Mental health interview and family history positive coefficent meaning the ones who have given the interview 
+# and have a familty hisroty of mental health could have more growing stress
+
+
+
+
+
+#%%SVM prep (Yonathan)
+
+'''Need to encode occupation since SVM takes numerical variables'''
+
+final_df_encoded = pd.get_dummies(final_df, columns=['Occupation'], drop_first=True)
+#First line returns us more variables (breaks variable down) with boolean values (True/False)
+#Need to convert into integer
+final_df_encoded[final_df_encoded.select_dtypes(include='bool').columns] = final_df_encoded.select_dtypes(include='bool').astype(int)
+
+#Check if it worked
+print(final_df_encoded.dtypes)
+#Yes it worked as of running the line (12/10). Now move forward to model building
+
+X_clean = X.dropna()
+y_clean = y[X_clean.index]
+
+
+#%%
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.preprocessing import StandardScaler
+
+
+'''There were some missing values for X so I will remove them in the previous cell'''
+X_clean = final_df_encoded.drop('Growing_Stress', axis=1).dropna()
+y_clean = final_df_encoded['Growing_Stress'][X_clean.index]
+
+#%%
+#from sklearn.model_selection import train_test_split
+#Xtrain, Xtest, Ytrain, Ytest = train_test_split(X_clean, y_clean, test_size=0.2, random_state=42)
+
+#scaler = StandardScaler()
+#Xtrain_scaled = scaler.fit_transform(Xtrain)
+#Xtest_scaled = scaler.transform(Xtest)
+
+#svm_model = SVC(kernel='linear', C=1.0, gamma='scale', probability=True)
+#svm_model.fit(Xtrain_scaled, Ytrain)
+
+# Predictions
+#y_pred_class = svm_model.predict(Xtest_scaled)
+#y_pred_prob = svm_model.predict_proba(Xtest_scaled)[:, 1]
+
+# %%[markdown]
+# Is SVM model ideal for the dataset? SVM is more ideal for smaller datasets
+# Should I take a percentage of the data and test again to see if computation time lowers?
+
+'''New code to take random sample(10%) of the data'''
+X_clean_sampled = X_clean.sample(frac=0.1, random_state=42)
+y_clean_sampled = y_clean[X_clean_sampled.index]
+
+
+from sklearn.model_selection import train_test_split
+Xtrain, Xtest, Ytrain, Ytest = train_test_split(X_clean_sampled, y_clean_sampled, test_size=0.2, random_state=42)
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+Xtrain_scaled = scaler.fit_transform(Xtrain)
+Xtest_scaled = scaler.transform(Xtest)
+
+from sklearn.svm import SVC
+svm_model = SVC(kernel='rbf', C=1.0, probability=True)
+svm_model.fit(Xtrain_scaled, Ytrain)
+
+
+# Predictions
+y_pred_class = svm_model.predict(Xtest_scaled)
+y_pred_prob = svm_model.predict_proba(Xtest_scaled)[:, 1]
+
+#%%[markdown]
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix, roc_auc_score, roc_curve
+import seaborn as sns
+import matplotlib.pyplot as plt
+accuracy = accuracy_score(Ytest, y_pred_class)
+print(f"Accuracy: {accuracy:.2f}")
+
+
+print("\nConfusion Matrix:")
+conf_matrix = confusion_matrix(Ytest, y_pred_class)
+sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues")
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+auc_score = roc_auc_score(Ytest, y_pred_prob)
+print(f"ROC-AUC: {auc_score:.2f}")
+
+fpr, tpr, _ = roc_curve(Ytest, y_pred_prob)
+plt.plot(fpr, tpr, label=f"SVM (AUC = {auc_score:.2f})")
+plt.plot([0, 1], [0, 1], 'k--', label="Random Chance")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("ROC Curve")
+plt.legend()
+plt.show()
+
+#Model has an accuracy of 0.75 and an AUC of 0.83. Let's try to see what parameters we can optimize to improve predictive power.
+
+from sklearn.model_selection import GridSearchCV
+param_grid = {
+    'C': [0.1, 1, 10],
+    'kernel': ['linear', 'rbf'],
+    'gamma': ['scale', 'auto']
+}
+
+# Grid search
+grid_search = GridSearchCV(SVC(probability=True), param_grid, cv=5, scoring='roc_auc', n_jobs=-1)
+grid_search.fit(Xtrain_scaled, Ytrain)
+
+print("Best Parameters:", grid_search.best_params_)
+
+#Analysis and conclusion for SVM:
+#The target variable was Growing Stress similar to other binary models in this document. 
+#We've evaluated the performance of the model through metrics like accuracy (0.68) and AUC(0.71)
+#SVM has presented us with computational challanges likely due to the number of features, one-hot encoding, and data size
+#To mitigate that, we tried to tune our parameters (TBD) and did our SVM on a sample of the dataset(10%)
+#The difficulty and output leaves us wondering if SVM is the ideal model to move forward with
+# %%[]
