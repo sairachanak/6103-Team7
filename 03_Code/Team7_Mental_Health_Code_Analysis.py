@@ -4,6 +4,7 @@
 # mental health outcomes
 #
 # SMART questions : 
+#
 # 1. What are the top 5 factors that influence the growing stress?
 #
 # 2. Do people with family history receive treatment or not?
@@ -71,20 +72,22 @@ csv_file_path = os.path.join(current_dir, "Mental Health Dataset.csv")
 health_data = pd.read_csv(csv_file_path)
 
 print("\nReady to continue.")
-# %%
+# %%[markdown]
+# Checking the dataset
 print(health_data.info())
 health_data.head()
-# %%
-## Removing null values
+# %%[markdown]
+# Removing null values
 print(health_data.isnull().sum())
 print(health_data.dropna(inplace=True))
 health_data.info()
-health_data.uniue()
+
 # %%[markdown]
 # Cleaning Grwoing Stress column
-
 # Assuming health_data is your DataFrame
+#
 # Step 1: Remove 'Maybe' values from Growing_Stress
+
 health_data = health_data[health_data['Growing_Stress'] != 'Maybe']
 
 print(health_data['Growing_Stress'].unique())
@@ -121,7 +124,7 @@ def map_growing_stress_column(df, column_name):
 health_data = map_growing_stress_column(health_data, 'Growing_Stress')
 
 
-# %%
+# %%[markdown]
 # Clean Timestamp - Convert time and date to year
 
 def process_timestamp_to_year(df, column_name):
@@ -153,10 +156,10 @@ health_data = process_timestamp_to_year(health_data, 'Timestamp')
 print(health_data[['Timestamp']].head())
 print(health_data['Timestamp'].info())
 
-#%%
+# %%
 print(health_data['Timestamp'].unique())
 
-# %%
+# %%[markdown]
 # Cleaning Gender variable - Now Male -> 0 and Female -> 1
 
 import pandas as pd
@@ -188,7 +191,7 @@ def process_gender_column(df, column_name):
 # Example usage for processing the Gender column
 health_data = process_gender_column(health_data, 'Gender')
 
-# %%
+# %%[markdown]
 # Cleaning the self_employed data
 print(health_data['self_employed'].unique())
 def process_self_employed_column(df, column_name):
@@ -219,7 +222,7 @@ def process_self_employed_column(df, column_name):
 health_data = process_self_employed_column(health_data, 'self_employed')
 
 
-# %%
+# %%[markdown]
 # Cleaning the family_history column
 health_data['family_history'].unique()
 
@@ -250,7 +253,7 @@ def process_family_history_column(df, column_name):
 # Example usage for processing the family_history column
 health_data = process_family_history_column(health_data, 'family_history')
 
-# %%
+# %%[markdown]
 # Clean the Days_Indoors
 health_data['Days_Indoors'].unique()
 
@@ -293,7 +296,7 @@ def process_days_indoors_column(df, column_name):
 health_data = process_days_indoors_column(health_data, 'Days_Indoors')
 
 
-# %%
+# %%[markdown]
 # Clean Treatment column
 health_data['treatment'].unique()
 def process_treatment_column(df, column_name):
@@ -330,7 +333,7 @@ def process_treatment_column(df, column_name):
 health_data = process_treatment_column(health_data, 'treatment')
 
 
-# %%
+# %%[markdown]
 # Clean changes_habits column
 health_data['Changes_Habits'].unique()
 def process_changes_habits_column(df, column_name):
@@ -364,7 +367,7 @@ def process_changes_habits_column(df, column_name):
 # Apply the function to the Changes_Habits column
 health_data = process_changes_habits_column(health_data, 'Changes_Habits')
 
-# %%
+# %%[markdown]
 # Clean the Mood_Swings
 health_data['Mood_Swings'].unique()
 
@@ -399,7 +402,7 @@ def map_mood_swings_column(df, column_name):
 # Apply the function to the 'Mood_Swings' column
 health_data = map_mood_swings_column(health_data, 'Mood_Swings')
 
-# %%
+# %%[markdown]
 # Clean the Mental_Health_History
 health_data['Mental_Health_History'].unique()
 
@@ -435,7 +438,7 @@ def map_mental_health_history_column(df, column_name):
 health_data = map_mental_health_history_column(health_data, 'Mental_Health_History')
 
 
-# %%
+# %%[markdown]
 # Clean Coping_Struggles column
 
 health_data['Coping_Struggles'].unique()
@@ -470,7 +473,7 @@ def map_coping_struggles_column(df, column_name):
 # Apply the function to the 'Coping_Struggles' column
 health_data = map_coping_struggles_column(health_data, 'Coping_Struggles')
 
-# %%
+# %%[markdown]
 # Clean Work_Interest column
 
 health_data['Work_Interest'].unique()
@@ -505,7 +508,7 @@ def map_work_interest_column(df, column_name):
 
 # Apply the function to the 'Work_Interest' column
 health_data = map_work_interest_column(health_data, 'Work_Interest')
-# %%
+# %%[markdown]
 # Clean Social_Weakness
 health_data['Social_Weakness'].unique()
 
@@ -540,7 +543,7 @@ def map_social_weakness_column(df, column_name):
 # Apply the function to the 'Social_Weakness' column
 health_data = map_social_weakness_column(health_data, 'Social_Weakness')
 
-# %%
+# %%[markdown]
 print(health_data['mental_health_interview'].unique())
 
 def map_mental_health_interview(df, column_name):
@@ -574,7 +577,7 @@ def map_mental_health_interview(df, column_name):
 # Apply the function to the 'Social_Weakness' column
 health_data = map_social_weakness_column(health_data, 'mental_health_interview')
 
-# %%
+# %%[markdown]
 # Clean care_options column
 health_data['care_options'].unique()
 
@@ -610,7 +613,7 @@ def map_care_options_column(df, column_name):
 health_data = map_care_options_column(health_data, 'care_options')
 
 
-# %%
+# %%[markdown]
 #Verifying the cleaned dataset
 health_data.describe()
 print(health_data.info())
@@ -659,8 +662,8 @@ plt.tight_layout()
 plt.show()
 
 
-# %%
-
+# %%[markdown]
+# Visualisation of Countries
 bright_palette = ["#FFB74D", "#64B5F6", "#81C784", "#E57373", "#FFD54F", "#4DD0E1"]
 
 # Set the Seaborn style to 'whitegrid' for a clean look
@@ -769,7 +772,7 @@ for fig in figures:
     fig.show()
 
 
-#%%[markdown] - Haeyeon
+# %%[markdown] - Haeyeon
 # Insights from ditributions
 
 # Growing Stress vs Timestamp
@@ -782,30 +785,41 @@ for fig in figures:
 # Among occupations, the highest proportion of "Yes" responses regarding growing stress is seen in the business, followed by the student occupation.
 
 # Growing Stress vs Self-employed
+# The individuals who are not self-employed seem to experience a little less stress than individuals who are
+# self-employed
 
 # Growing Stress vs Family history
+# The individuals who have growing Family history seem to have higher growing stress
 
 # Growing stress vs Treatment
+# The individuals who recieve treatment tend to gave a less growing stress
 
 # Growing Stress vs Days_Indoors
+# The individuals who go out everyday seem to have less growing stress than other groups
 
 # Growing Stress vs Changes Habits
+# The individuals who are not aware of changes in their habits tend to have more growing stress
 
 # Growing Stress vs Mental Health History
+# The people with Mental Health History seem to have higher growing stress than other groups
 
 # Growing Stress vs Mood Swings
+# The individuals with Medium mood swings tend to have higher Growing Stress
 
 # Growing Stress vs Coping Struggles
+# The individuals who cannot cop with struggles have high growing stress
 
 # Growing Stress vs Work Interest
+# The individuals with work interest tend to have more growing stress 
 
 # Growing Stress vs Social Weakness
-
-# Growing Stress vs Mental Health Interview
+# The individuals with social weakness tend to have more growing stress
 
 # Growing Stress vs Care options
+# The individuals with care options tend to have more growing stress
 
-#$$[markdown]
+
+# %%[markdown]
 # EDA for Treatment
 
 # Define a new color palette for treatment (0 for 'No' and 1 for 'Yes')
@@ -884,8 +898,6 @@ for feature in health_data.columns:
 for fig in treatment_relation_figures:
     fig.show()
 
-#%%[markdown]
-# Statistical Testing for Treatment
 
 # %%[markdown]
 # Copy dataset for trying different Smart question
@@ -906,8 +918,9 @@ encoded_final_df.head()
 
 # %%[markdown]
 # Correlation Matrix
-
+#
 # Calculate Spearman correlation matrix
+
 correlation_matrix, _ = spearmanr(encoded_final_df, axis=0)
 
 # Convert the result to a DataFrame for better visualization
@@ -968,11 +981,11 @@ for col in cols:
     calculate_chi_square(col)
 
 
-#%%[markdown]
+# %%[markdown]
 # As the Timestamp, Country, self-employed are independednt of Growing Stress and also have a highly unbalanced data
 # it is better to remove those columns for our Modelling.
 
-#%%[markdown]
+# %%[markdown]
 # Modelling
 
 encoded_final_df = encoded_final_df.drop(columns=['Timestamp', 'self_employed'])
@@ -982,13 +995,6 @@ X = data
 y = f_data
 Xtrain, Xtest, Ytrain, Ytest = train_test_split(data, f_data, test_size=0.2, random_state=42)
 methodDict = {}
-
-#%%
-logit = LogisticRegression()  # instantiate
-logit.fit( Xtrain, Ytrain )
-print('Logit model accuracy (with the test set):', logit.score(Xtest, Ytest))
-print('Logit model accuracy (with the train set):', logit.score(Xtrain, Ytrain))
-
 
 # %%[markdown]
 # Evaluation of the model
@@ -1130,7 +1136,7 @@ def evalClassModel(model, y_test, y_pred_class, plot=False):
     
     return accuracy
 #
-#%%[markdown]
+# %%[markdown]
 # Logistic regression
 
 def logisticRegression():
@@ -1173,7 +1179,8 @@ def logisticRegression():
     
 logisticRegression()
 
-#%%
+# %%[markdown]
+# Feature Importance
 model = LogisticRegression(max_iter=1000)
 
 # Create the feature importances visualizer
@@ -1184,7 +1191,8 @@ visualizer.fit(Xtrain, Ytrain)
 
 # Show the visualization
 visualizer.show()
-#%%
+# %%[markdown]
+# Classification Report
 y_pred = model.predict(Xtest)
 
 # Generate classification report
@@ -1193,7 +1201,7 @@ print(classification_report(Ytest, y_pred))
 
 # %%[markdown]
 
-# Desciion Tree
+# Decision Tree
 
 target = encoded_final_df['Growing_Stress']
 
@@ -1203,9 +1211,9 @@ features = encoded_final_df.drop(['Growing_Stress'], axis=1)
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=0)
 
-#%%
-
+# %%[markdown]
 # Base model with default parameters
+
 base_params = {
     'max_depth': 10,         # No limit by default
     'min_samples_split': 10,    # Default value
@@ -1216,9 +1224,9 @@ base_params = {
 # Define K-Fold cross-validator
 kfold = KFold(n_splits=10, shuffle=True, random_state=0)
 
-#%%[markdown]
-
+# %%[markdown]
 # Function to vary the parameters
+
 def tune_and_plot(param_name, param_values, base_params, X_train, y_train):
     train_accuracies = []
     test_accuracies = []
@@ -1250,22 +1258,27 @@ def tune_and_plot(param_name, param_values, base_params, X_train, y_train):
     plt.grid()
     plt.show()
 
-#%%
+# %%[markdown]
 # Tune max_depth
 tune_and_plot('max_depth', [None, 5, 6, 7, 8, 9, 10], base_params, X_train, y_train)
 
+# %%[markdown]
 # At 9 test accuarcy seems to be the highest hence better to set max_depth as 9
 # If the tree becomes complex, we can decrease it later to 6 or 7 as test accuracy is still high for them
-#%%
+# %%[markdown]
 # Tune min_samples_split
-tune_and_plot('min_samples_split', [2, 5, 10, 15, 20], base_params, X_train, y_train)
-#%%
+tune_and_plot('min_samples_split', [2, 5, 10], base_params, X_train, y_train)
+# %%[markdown]
+# As all the values have constant accuracy, considering 10 to reduce overfitting
+# %%
 # Tune min_samples_leaf
 tune_and_plot('min_samples_leaf', [1, 2, 5, 10], base_params, X_train, y_train)
-#%%
+# %%[markdown]
+# At 10 there is increase in accuracy hence considering 10 to reduce overfitting
+# %%[markdown]
 # Tune max_features
 tune_and_plot('max_features', ['sqrt', 'log2'], base_params, X_train, y_train)
-#%%
+# %%[markdown]
 # Now let's check the final accuracy with these parameters using k-fold cross validation
 # Define the final model with optimal parameters
 final_params = {
@@ -1304,17 +1317,17 @@ print("Standard Deviation of Cross-Validation Accuracy:", std_cv_score)
 print("Final Training Accuracy:", train_accuracy)
 print("Final Test Accuracy:", test_accuracy)
 
-#%%
+# %%
 y_pred = final_model.predict(X_test)
 
 # Generate classification report
 print("Classification Report:")
 print(classification_report(y_test, y_pred))
-#%%
+# %%[markdown]
 # For depth = 9 it seems that the model has slightly greater test accuracy than train accuracy but the 
 # cross validation accuracy is high hence, this seems to be a good fit
 
-#%%
+# %%[markdown]
 # Confusion matrix and AUC, ROC
 y_pred = final_model.predict(X_test)
 y_pred_proba = final_model.predict_proba(X_test)[:, 1]  # Probability of the positive class
@@ -1345,9 +1358,10 @@ plt.show()
 # Print AUC score
 print("AUC Score:", roc_auc)
 
+# %%[markdown]
 # As observed we got an AUC of 0.93 which reflects that most of the classification has been done 
 # accurately.
-#%%
+# %%[markdown]
 # Feature Importance
 
 feature_importances = pd.DataFrame({
@@ -1373,11 +1387,11 @@ plt.show()
 
 
 # %%[markdown]
-
+#
 # Random Forest
-
+#
 # Perform GridSearchCV to find the optimal parameters
-
+#
 # Base model with default parameters
 base_params = {
     'n_estimators': 10,
@@ -1392,7 +1406,7 @@ base_params = {
 kfold = KFold(n_splits=10, shuffle=True, random_state=0)
 
 
-#%%[markdown]
+# %%[markdown]
 # Function to vary the parameters
 
 def tune_and_plot(param_name, param_values, base_params, X_train, y_train):
@@ -1425,38 +1439,42 @@ def tune_and_plot(param_name, param_values, base_params, X_train, y_train):
     plt.legend()
     plt.grid()
     plt.show()
-#%%[markdown]
+# %%[markdown]
 
 tune_and_plot('n_estimators', [10, 20, 30, 50], base_params, X_train, y_train)
-
+# %%[markdown]
 # After estimators of 10 it seems that the train error rate increases compared to test error rate
 # hence best to set n_estimators as 10
-#%%
+# %%
 
 tune_and_plot('max_depth', [5, 6, 7, 8,9, 10], base_params, X_train, y_train)
+# %%[markdown]
 # It seems that at max_depth = 7 the test accuracy is highest comapred to train hence 
 # better to set the max_depth to 7
 
-#%%
+# %%
 
 tune_and_plot('min_samples_split', [5, 10, 15, 20], base_params, X_train, y_train)
 
+# %%[markdown]
 # It has same accuracy for all values hence better to set min_samples_split to 20
 # as it will reduce the complexity of the model
-#%%
+# %%
 tune_and_plot('min_samples_leaf', [1, 5, 10, 20], base_params, X_train, y_train)
 
+# %%[markdown]
 # According to the graph it seems that min_samples_leaf has highest accuarcy hence better to set
 # min_samples_leaf to 20
-#%%
+# %%
 
 tune_and_plot('max_features', ['sqrt', 'log2'], base_params, X_train, y_train)
 
-#%%
+# %%
 tune_and_plot('bootstrap', [True, False], base_params, X_train, y_train)
 
+# %%[markdown]
 # According to the graph it is better to choose booststrap = TRUE
-#%%
+# %%[markdown]
 # Now lets check the final accuracy with these parameters using k-fold cross validation
 
 
@@ -1500,12 +1518,12 @@ print("Standard Deviation of Cross-Validation Accuracy:", std_cv_score)
 print("Final Training Accuracy:", train_accuracy)
 print("Final Test Accuracy:", test_accuracy)
 
-#%%
+# %%[markdown]
 # As seen the training testing accuracies along with highest cross validation accuracies seems to be 
 # almost same, hence we can choose this fit, if we want to reduce complexity and compromise accuracy it is 
 # good to choose depth 6 as well
 
-#%%
+# %%[markdown]
 # Confusion Matrix and ROC AUC
 
 # Make predictions on the test set from final model fit
@@ -1541,14 +1559,14 @@ print("AUC Score:", roc_auc)
 
 # As observed we got an AUC of 0.97 which reflects that most of the classification has been done 
 # accurately.
-#%%
+# %%[markdown]
 y_pred = final_model.predict(X_test)
 
 # Generate classification report
 print("Classification Report:")
 print(classification_report(y_test, y_pred))
 
-#%%
+# %%[markdown]
 # Train the Random Forest model on training data
 final_model.fit(Xtrain, Ytrain)
 
@@ -1579,7 +1597,8 @@ plt.tight_layout()
 plt.show()
 
 
-#%% KNN
+# %%[markdown] 
+# KNN
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
@@ -1608,11 +1627,12 @@ print("\nClassification Report:")
 print(classification_report(y_test, y_pred))
 
 
-#%%
+# %%[markdown]
 # As we can see the model is overfitting and the cross validation results suggest the model has high variance 
 # and changes for different data.
 
-# %%  Abirham - Q2
+# %%[markdown]
+# SMART Q2
 # Do people with Family history receive treatment or not?
 # how well "Family History" predicts whether a person will seek treatment
 # %%[markdown]
@@ -1710,7 +1730,7 @@ plt.title('Feature Importance for Logistic Regression')
 plt.gca().invert_yaxis()  # Reverse the order for better readability
 plt.show()
 
-# %%
+# %%[markdown]
 # we got a positive coeficient and  it means having a family history  increases the likely hood of getting treatment
 # %%[markdown]
 # Evaluation for the model
@@ -1805,9 +1825,11 @@ plt.show()
 
 
 
-#%%[markdown]
-# Q3 - What are the top 5 factors thats impact the growing stress in students  
+# %%[markdown]
+# SMART Q3 - What are the top 5 factors thats impact the growing stress in students  
+#
 # Data preparation
+#
 # Filter data for 'Student' occupation
 
 health_data_student = health_data_backup[health_data_backup['Occupation'] == 'Student']
@@ -1822,9 +1844,9 @@ health_data_student.head()
 health_data_student.info()
 
 
-#%%[markdown]
+# %%[markdown]
 # EDA for student start here
-
+#
 # Initialize a list to hold figures_st
 figures_st = []
 
@@ -1874,39 +1896,9 @@ for feature in health_data_student.columns:
 for fig in figures_st:
     fig.show()
 
-#%%[markdown]
-# Insights from ditributions
-#
-# Growing Stress vs Timestamp: 
-# The distribution differences across the years 2014, 2015, and 2016 are not significant. In all three years, the proportion of respondents answering "Yes" is higher.
-#
-# Growing Stress vs Gender:
-# Within the same gender, for male, the proportion of those who answered "Yes" to growing stress is higher than that of female.
-#
-# Growing Stress vs Self-employed/Family history/treatment :
-# The proportion looks similar between No and Yes groups.
-
-# Growing Stress vs Days_Indoors: 
-# Students who spend more than 30 days away from home are more likely to experience growing stress.
-
-# Growing Stress vs Changes Habits
-
-# Growing Stress vs Mental Health History
-
-# Growing Stress vs Mood Swings
-
-# Growing Stress vs Coping Struggles
-
-# Growing Stress vs Work Interest
-
-# Growing Stress vs Social Weakness
-
-# Growing Stress vs Mental Health Interview
-
-# Growing Stress vs Care options
 
 # %%[markdown]
-
+#
 # Correlation heatmap for variables correlated with Growing Stress for students
 student_corr = health_data_student[['Days_Indoors', 'Growing_Stress', 'Changes_Habits', 'Coping_Struggles', 
                              'Mood_Swings', 'Social_Weakness', 'treatment']].corr()
@@ -1946,8 +1938,8 @@ for col in cols:
     calculate_chi_square(col)
 
 # %%[markdown]
-
-# Modeling For Student - yonathan
+#
+# Modeling For Student
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
@@ -2033,3 +2025,5 @@ coefficients = pd.DataFrame({
 print(coefficients)
 #Given the model we just built, the strongest coefficients seem to be Days_Indoors, Mood_Swings, and social_weakness,
 #Let's try to remove some of the unimportant variables to test if model accuracy will improve
+
+# %%
