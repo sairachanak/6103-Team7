@@ -7,6 +7,7 @@ from matplotlib import gridspec
 import seaborn as sns 
 import altair as alt
 from scipy.stats import randint
+import plotly.graph_objects as go
 import os
 import plotly.graph_objects as go
 
@@ -1964,6 +1965,94 @@ print(f"Optimized KNN AUC-ROC: {roc_auc_score(y_test, y_pred_proba_best):.2f}")
 
 
 # %%
+
+
+# %% KNN
+
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+
+# Assuming 'Growing_Stress' is our target variable
+X = encoded_final_df.drop('Growing_Stress', axis=1)
+y = encoded_final_df['Growing_Stress']
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize and train the KNN model
+knn = KNeighborsClassifier(n_neighbors=20)  # You can adjust the number of neighbors
+knn.fit(X_train, y_train)
+
+# Make predictions
+y_pred = knn.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy}")
+
+# Print detailed classification report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+
+# %%
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {
+    'n_neighbors': [3, 5, 7, 9, 11],
+    'weights': ['uniform', 'distance'],
+    'metric': ['euclidean', 'manhattan']
+}
+
+grid_search = GridSearchCV(KNeighborsClassifier(), param_grid, cv=5)
+grid_search.fit(X_train, y_train)
+
+best_knn = grid_search.best_estimator_
+
+# %%
+from sklearn.model_selection import cross_val_score
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+
+cv_scores = cross_val_score(best_knn, X, y, cv=5)
+print(f"Cross-validation scores: {cv_scores}")
+print(f"Mean CV score: {cv_scores.mean():.4f}")
+
+
+# %%
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+
+# Initialize and train the KNN model
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+# Make predictions
+y_pred = knn.predict(X_test)
+y_pred_proba = knn.predict_proba(X_test)[:, 1]
+
+# Calculate performance metrics
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+roc_auc = roc_auc_score(y_test, y_pred_proba)
+
+# Cross-validation score
+cv_scores = cross_val_score(knn, X, y, cv=5)
+
+print(f"Accuracy: {accuracy:.4f}")
+print(f"ROC AUC Score: {roc_auc:.4f}")
+print(f"Cross-validation scores: {cv_scores}")
+print(f"Mean CV score: {cv_scores.mean():.4f}")
+
+print("\nConfusion Matrix:")
+print(conf_matrix)
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
 
 
 
